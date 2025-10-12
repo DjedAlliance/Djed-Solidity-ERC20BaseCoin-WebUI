@@ -205,7 +205,7 @@ export default function Home() {
                 <InteractiveCard className="h-full">
                   <div className="space-y-6">
                     <div className="flex items-start justify-between">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-white">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-black dark:text-white">
                         {item.icon}
                       </div>
                       <span className="text-5xl font-bold text-border">{item.step}</span>
@@ -307,7 +307,7 @@ export default function Home() {
               <FloatingElement speed={4} range={15}>
                 <div className="relative z-10 space-y-6">
                   <h2 className="text-3xl md:text-5xl font-bold">
-                    Ready to Experience <GradientText className="from-orange-600 to-orange-500">Stability</GradientText>?
+                    Ready to Experience <GradientText className="from-orange-600 to-orange-500">Stability</GradientText> ?
                   </h2>
                   <p className="text-xl text-secondary max-w-2xl mx-auto">
                     Join thousands of users who trust our algorithmic stablecoin protocol.

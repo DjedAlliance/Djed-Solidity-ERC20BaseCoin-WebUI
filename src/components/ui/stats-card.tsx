@@ -88,7 +88,7 @@ export function StatsCard({
 
         {/* Value and label */}
         <div className="space-y-2">
-          <div className="text-4xl font-black text-black">
+          <div className="text-4xl font-black" style={{ color: 'var(--text)' }}>
             <AnimatedCounter
               value={value}
               prefix={prefix}
@@ -97,7 +97,7 @@ export function StatsCard({
               duration={2000}
             />
           </div>
-          <p className="text-sm font-medium text-black/70 uppercase tracking-wider">{label}</p>
+          <p className="text-sm font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{label}</p>
         </div>
 
         {/* Decorative line */}
