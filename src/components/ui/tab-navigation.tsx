@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const TabNavigation = () => {
-  const [hoveredTab, setHoveredTab] = useState(null);
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
+  const pathname = usePathname();
 
   const tabBase =
     'py-1 px-1 bg-black dark:bg-white group hover:bg-gradient-to-b hover:from-white hover:to-black hover:via-white hover:to-[70%] transition-[background,border-radius] duration-500 ease-in-out [will-change:background,border-radius] dark:hover:bg-gradient-to-b dark:hover:from-[#0f172a] dark:hover:to-white dark:hover:via-[#0f172a]';
@@ -17,67 +19,69 @@ const TabNavigation = () => {
   const spacerBase =
     'bg-black dark:bg-white transition-[border-radius] ease-in-out duration-300';
 
+  const isActive = (path: string) => pathname === path;
+
   return (
     <div className="w-1/3 mx-auto text-white dark:text-black">
-      <div className="grid grid-cols-[0.2fr_0.5fr_0.5fr_0.5fr_0.2fr] gap-0 w-full">
+      <div className="grid grid-cols-[0.4fr_0.8fr_0.8fr_0.8fr_0.4fr] gap-0 w-full">
         {/* Left Spacer */}
         <div
           className={`${spacerBase} rounded-l-3xl ${
-            hoveredTab === 'home'
+            hoveredTab === 'dashboard'
               ? 'rounded-tr-2xl duration-500'
               : 'rounded-tr-none duration-200'
           }`}
         ></div>
 
-        {/* Home */}
+        {/* Dashboard */}
         <div
           className={`${tabBase} ${
-            hoveredTab === 'trade' ? 'rounded-tr-2xl duration-500' : 'rounded-tr-none duration-200'
+            hoveredTab === 'portfolio' ? 'rounded-tr-2xl duration-500' : 'rounded-tr-none duration-200'
           }`}
-          onMouseEnter={() => setHoveredTab('home')}
+          onMouseEnter={() => setHoveredTab('dashboard')}
           onMouseLeave={() => setHoveredTab(null)}
         >
-          <Link href="/" className={linkBase}>
-            Home
+          <Link href="/dashboard" className={`${linkBase} ${isActive('/dashboard') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
+            Dashboard
+          </Link>
+        </div>
+
+        {/* Portfolio */}
+        <div
+          className={`${tabBase} ${
+            hoveredTab === 'dashboard'
+              ? 'rounded-tl-2xl duration-500'
+              : hoveredTab === 'trade'
+              ? 'rounded-tr-2xl duration-500'
+              : 'rounded-tl-none rounded-tr-none duration-200'
+          }`}
+          onMouseEnter={() => setHoveredTab('portfolio')}
+          onMouseLeave={() => setHoveredTab(null)}
+        >
+          <Link href="/portfolio" className={`${linkBase} group-hover:rounded-b-2xl ${isActive('/portfolio') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
+            Portfolio
           </Link>
         </div>
 
         {/* Trade */}
         <div
           className={`${tabBase} ${
-            hoveredTab === 'home'
+            hoveredTab === 'portfolio'
               ? 'rounded-tl-2xl duration-500'
-              : hoveredTab === 'docs'
-              ? 'rounded-tr-2xl duration-500'
-              : 'rounded-tl-none rounded-tr-none duration-200'
+              : 'rounded-tl-none duration-200'
           }`}
           onMouseEnter={() => setHoveredTab('trade')}
           onMouseLeave={() => setHoveredTab(null)}
         >
-          <Link href="/" className={`${linkBase} group-hover:rounded-b-2xl`}>
+          <Link href="/trade" className={`${linkBase} group-hover:rounded-b-2xl ${isActive('/trade') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
             Trade
-          </Link>
-        </div>
-
-        {/* Docs */}
-        <div
-          className={`${tabBase} ${
-            hoveredTab === 'trade'
-              ? 'rounded-tl-2xl duration-500'
-              : 'rounded-tl-none duration-200'
-          }`}
-          onMouseEnter={() => setHoveredTab('docs')}
-          onMouseLeave={() => setHoveredTab(null)}
-        >
-          <Link href="/" className={`${linkBase} group-hover:rounded-b-2xl`}>
-            Docs
           </Link>
         </div>
 
         {/* Right Spacer */}
         <div
           className={`${spacerBase} rounded-r-3xl ${
-            hoveredTab === 'docs'
+            hoveredTab === 'trade'
               ? 'rounded-tl-2xl duration-500'
               : 'rounded-tl-none duration-200'
           }`}

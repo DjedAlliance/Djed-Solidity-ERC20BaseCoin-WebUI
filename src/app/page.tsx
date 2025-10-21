@@ -68,7 +68,7 @@ export default function Home() {
           />
         </div>
         
-        <div className="container mx-auto max-w-7xl relative" style={{ zIndex: 10 }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative" style={{ zIndex: 10 }}>
           <div className="text-center space-y-8">
             {/* Badge */}
             <ScrollReveal delay={0.1}>
@@ -112,7 +112,7 @@ export default function Home() {
 
       {/* Trust Indicators Section */}
       <section className="py-32 px-4 relative">
-        <div className="container mx-auto max-w-7xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -165,7 +165,7 @@ export default function Home() {
 
       {/* How It Works Section */}
       <section className="py-32 px-4 bg-surface/50">
-        <div className="container mx-auto max-w-7xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <div className="text-center mb-20">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -232,7 +232,7 @@ export default function Home() {
 
       {/* Protocol Stats Section */}
       <section className="py-32 px-4">
-        <div className="container mx-auto max-w-7xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -293,7 +293,7 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="py-32 px-4 relative">
-        <div className="container mx-auto max-w-4xl">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-orange-500/10 via-orange-400/10 to-orange-300/10 backdrop-blur-xl p-12 md:p-16 text-center">
               {/* Background blur shapes */}

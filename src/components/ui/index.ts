@@ -2,11 +2,15 @@
 export { Loading } from './loading';
 
 // Other UI Components
+export { Alert, AlertDescription, AlertTitle } from './alert';
 export { Button } from './button';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 export { Input } from './input';
 export { Label } from './label';
+export { Progress } from './progress';
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 export { Separator } from './separator';
+export { Switch } from './switch';
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 export { default as WalletButton } from './walletButton';
 
