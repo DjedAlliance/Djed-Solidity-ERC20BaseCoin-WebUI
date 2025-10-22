@@ -91,33 +91,23 @@ export default function Dashboard() {
     functionName: 'txLimit',
   });
 
-  // Read user balances
-  const { data: stableCoinBalance, refetch: refetchStableCoinBalance } = useReadContract({
+  // Read system-wide token supplies
+  const { data: stableCoinTotalSupply, refetch: refetchStableCoinTotalSupply } = useReadContract({
     address: STABLE_COIN_ADDRESS,
     abi: COIN_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
+    functionName: 'totalSupply',
   });
 
-  const { data: reserveCoinBalance, refetch: refetchReserveCoinBalance } = useReadContract({
+  const { data: reserveCoinTotalSupply, refetch: refetchReserveCoinTotalSupply } = useReadContract({
     address: RESERVE_COIN_ADDRESS,
     abi: COIN_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
+    functionName: 'totalSupply',
   });
 
   const { data: baseCoinAddress, refetch: refetchBaseCoinAddress } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'baseCoin',
-  });
-
-  const { data: userBaseCoinBalance, refetch: refetchUserBaseCoinBalance } = useReadContract({
-    address: baseCoinAddress,
-    abi: COIN_ABI,
-    functionName: 'balanceOf',
-    args: baseCoinAddress && address ? [address] : undefined,
-    enabled: !!baseCoinAddress && !!address,
   });
 
   const handleRefresh = () => {
@@ -132,10 +122,9 @@ export default function Dashboard() {
     refetchFee();
     refetchTreasuryFee();
     refetchTxLimit();
-    refetchStableCoinBalance();
-    refetchReserveCoinBalance();
+    refetchStableCoinTotalSupply();
+    refetchReserveCoinTotalSupply();
     refetchBaseCoinAddress();
-    refetchUserBaseCoinBalance();
   };
 
   const formatNumber = (value: bigint | undefined, decimals: number = 18) => {
@@ -153,6 +142,11 @@ export default function Dashboard() {
     return `${(Number(value) / 100).toFixed(2)}%`;
   };
 
+  const formatAddress = (address: string | undefined) => {
+    if (!address) return 'Loading...';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
@@ -160,7 +154,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Monitor your Djed Protocol portfolio and protocol health
+            Monitor Djed Protocol system health and analytics
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" size="sm">
@@ -177,7 +171,7 @@ export default function Dashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatPrice(scPrice)}</div>
+            <div className="text-2xl font-bold">{formatPrice(scPrice as bigint)}</div>
             <p className="text-xs text-muted-foreground">
               Target: $1.00
             </p>
@@ -190,7 +184,7 @@ export default function Dashboard() {
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatPercentage(ratio)}</div>
+            <div className="text-2xl font-bold">{formatPercentage(ratio as bigint)}</div>
             <p className="text-xs text-muted-foreground">
               Protocol health indicator
             </p>
@@ -203,7 +197,7 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(reserveAmount)}</div>
+            <div className="text-2xl font-bold">{formatNumber(reserveAmount as bigint)}</div>
             <p className="text-xs text-muted-foreground">
               BaseCoin reserves
             </p>
@@ -216,7 +210,7 @@ export default function Dashboard() {
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(liabilities)}</div>
+            <div className="text-2xl font-bold">{formatNumber(liabilities as bigint)}</div>
             <p className="text-xs text-muted-foreground">
               Outstanding StableCoins
             </p>
@@ -224,92 +218,86 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* User Portfolio */}
-      {isConnected && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5" />
-              Your Portfolio
-            </CardTitle>
-            <CardDescription>
-              Your current holdings in the Djed Protocol
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">StableCoins (SC)</span>
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
-                </div>
-                <div className="text-2xl font-bold">
-                  {formatNumber(stableCoinBalance)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  ≈ {stableCoinBalance && scPrice ? 
-                    `$${(Number(formatUnits(stableCoinBalance, 18)) * Number(formatUnits(scPrice, 18))).toFixed(2)}` : 
-                    '$0.00'}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">ReserveCoins (RC)</span>
-                  <ArrowDownRight className="h-4 w-4 text-blue-500" />
-                </div>
-                <div className="text-2xl font-bold">
-                  {formatNumber(reserveCoinBalance)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  ≈ {reserveCoinBalance && rcTargetPrice ? 
-                    `$${(Number(formatUnits(reserveCoinBalance, 18)) * Number(formatUnits(rcTargetPrice, 18))).toFixed(2)}` : 
-                    '$0.00'}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">BaseCoins (BC)</span>
-                  <Activity className="h-4 w-4 text-purple-500" />
-                </div>
-                <div className="text-2xl font-bold">
-                  {formatNumber(userBaseCoinBalance)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Available for trading
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Quick Actions */}
+      {/* System Token Supply */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            System Token Supply
+          </CardTitle>
           <CardDescription>
-            Common trading operations
+            Total supply of tokens in the Djed Protocol
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">StableCoins (SC)</span>
+                <ArrowUpRight className="h-4 w-4 text-green-500" />
+              </div>
+              <div className="text-2xl font-bold">
+                {formatNumber(stableCoinTotalSupply as bigint)}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Total supply in circulation
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">ReserveCoins (RC)</span>
+                <ArrowDownRight className="h-4 w-4 text-blue-500" />
+              </div>
+              <div className="text-2xl font-bold">
+                {formatNumber(reserveCoinTotalSupply as bigint)}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Total supply in circulation
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">BaseCoin Address</span>
+                <Activity className="h-4 w-4 text-purple-500" />
+              </div>
+              <div className="text-sm font-mono break-all">
+                {formatAddress(baseCoinAddress as string)}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Collateral asset contract
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* System Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>System Actions</CardTitle>
+          <CardDescription>
+            Navigate to different sections of the Djed Protocol
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button className="h-20 flex flex-col items-center justify-center space-y-2" variant="outline">
-              <ArrowUpRight className="h-6 w-6 text-green-500" />
-              <span>Buy StableCoins</span>
+              <Wallet className="h-6 w-6 text-blue-500" />
+              <span>View Portfolio</span>
             </Button>
             <Button className="h-20 flex flex-col items-center justify-center space-y-2" variant="outline">
-              <ArrowDownRight className="h-6 w-6 text-red-500" />
-              <span>Sell StableCoins</span>
+              <Activity className="h-6 w-6 text-green-500" />
+              <span>Start Trading</span>
             </Button>
             <Button className="h-20 flex flex-col items-center justify-center space-y-2" variant="outline">
-              <TrendingUp className="h-6 w-6 text-blue-500" />
-              <span>Buy ReserveCoins</span>
+              <BarChart3 className="h-6 w-6 text-purple-500" />
+              <span>Analytics</span>
             </Button>
             <Button className="h-20 flex flex-col items-center justify-center space-y-2" variant="outline">
-              <TrendingDown className="h-6 w-6 text-orange-500" />
-              <span>Sell ReserveCoins</span>
+              <Shield className="h-6 w-6 text-orange-500" />
+              <span>Protocol Info</span>
             </Button>
           </div>
         </CardContent>
@@ -331,11 +319,11 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Oracle Price</span>
-                <span className="text-sm">{formatPrice(oraclePrice)}</span>
+                <span className="text-sm">{formatPrice(oraclePrice as bigint)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">ReserveCoin Target Price</span>
-                <span className="text-sm">{formatPrice(rcTargetPrice)}</span>
+                <span className="text-sm">{formatPrice(rcTargetPrice as bigint)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Protocol Status</span>
@@ -359,15 +347,15 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Trading Fee</span>
-                <span className="text-sm">{formatPercentage(fee)}</span>
+                <span className="text-sm">{formatPercentage(fee as bigint)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Treasury Fee</span>
-                <span className="text-sm">{formatPercentage(treasuryFee)}</span>
+                <span className="text-sm">{formatPercentage(treasuryFee as bigint)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Transaction Limit</span>
-                <span className="text-sm">{formatNumber(txLimit)}</span>
+                <span className="text-sm">{formatNumber(txLimit as bigint)}</span>
               </div>
             </div>
           </CardContent>
