@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseUnits, formatUnits, isAddress } from 'viem';
 import { 
@@ -60,6 +60,7 @@ export default function Trade() {
     hash: approvalHash 
   });
 
+
   // Auto-retry trade after successful approval
   useEffect(() => {
     if (isApprovalConfirmed && approvalHash) {
@@ -67,7 +68,7 @@ export default function Trade() {
       setApprovalHash(undefined);
       executeTrade();
     }
-  }, [isApprovalConfirmed, approvalHash]);
+  }, [isApprovalConfirmed, approvalHash,executeTrade]);
 
   // Read contract data
   const { data: baseCoinAddress } = useReadContract({
@@ -140,18 +141,35 @@ export default function Trade() {
         const amountBN = parseUnits(amount, 18);
         const priceBN = scPrice as bigint;
         
-        let estimated = '0';
+        // Constants for BigInt arithmetic
+        const DECIMALS = 10n ** 18n; // 18 decimal places
+        const OUTPUT_DECIMALS = 10n ** 6n; // 6 decimal places for output
+        
+        let estimatedScaled: bigint;
+        
         if (tradeType === 'buy-stable' || tradeType === 'buy-reserve') {
-          // For buying: amount / price = tokens received
-          estimated = (Number(formatUnits(amountBN, 18)) / Number(formatUnits(priceBN, 18))).toFixed(6);
+          // For buying: amount * DECIMALS / price = tokens received
+          // This gives us the result in 18-decimal precision
+          estimatedScaled = (amountBN * DECIMALS) / priceBN;
         } else if (tradeType === 'sell-stable') {
-          // For selling stablecoins: amount * price = basecoins received
-          estimated = (Number(formatUnits(amountBN, 18)) * Number(formatUnits(priceBN, 18))).toFixed(6);
+          // For selling stablecoins: amount * price / DECIMALS = basecoins received
+          estimatedScaled = (amountBN * priceBN) / DECIMALS;
         } else if (tradeType === 'sell-reserve') {
-          // For selling reservecoins: amount * target price = basecoins received
+          // For selling reservecoins: amount * target price / DECIMALS = basecoins received
           const targetPrice = rcTargetPrice as bigint;
-          estimated = (Number(formatUnits(amountBN, 18)) * Number(formatUnits(targetPrice, 18))).toFixed(6);
+          estimatedScaled = (amountBN * targetPrice) / DECIMALS;
+        } else {
+          estimatedScaled = 0n;
         }
+        
+        // Convert to 6-decimal precision for display
+        const scaledForOutput = (estimatedScaled * OUTPUT_DECIMALS) / DECIMALS;
+        const integerPart = scaledForOutput / OUTPUT_DECIMALS;
+        const fractionalPart = scaledForOutput % OUTPUT_DECIMALS;
+        
+        // Format with 6 decimal places
+        const fractionalStr = fractionalPart.toString().padStart(6, '0').slice(0, 6);
+        const estimated = `${integerPart.toString()}.${fractionalStr}`;
         
         setEstimatedAmount(estimated);
       } catch (error) {
@@ -172,8 +190,7 @@ export default function Trade() {
     }
   }, [address, receiver]);
 
-
-  const executeTrade = async () => {
+  const executeTrade = useCallback(async () => {
     if (!amount || !receiver || !address) return;
 
     try {
@@ -231,6 +248,7 @@ export default function Trade() {
             abi: DJED_ABI,
             functionName: 'buyReserveCoins',
             args: [receiver, feeUIBn, uiAddress, amountBN],
+            gas: BigInt(8000000), // 8M gas limit - reduced from 15M
           });
           break;
         case 'sell-reserve':
@@ -253,7 +271,7 @@ export default function Trade() {
     } catch (err) {
       console.error('Error executing trade:', err);
     }
-  };
+  }, [amount, receiver, address, tradeType, amountRC, feeUI, ui, baseCoinAddress, writeContract]);
 
   const formatNumber = (value: bigint | undefined, decimals: number = 18) => {
     if (!value) return '0';
