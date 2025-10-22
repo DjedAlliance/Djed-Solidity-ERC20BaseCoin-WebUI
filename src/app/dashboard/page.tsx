@@ -129,22 +129,40 @@ export default function Dashboard() {
 
   const formatNumber = (value: bigint | undefined, decimals: number = 18) => {
     if (!value) return '0';
-    return (Number(value) / Math.pow(10, decimals)).toFixed(4);
+    return parseFloat(formatUnits(value, decimals)).toFixed(4);
   };
 
   const formatPrice = (value: bigint | undefined, decimals: number = 18) => {
     if (!value) return '$0.00';
-    return `$${(Number(value) / Math.pow(10, decimals)).toFixed(2)}`;
+    return `$${parseFloat(formatUnits(value, decimals)).toFixed(2)}`;
   };
 
   const formatPercentage = (value: bigint | undefined) => {
     if (!value) return '0%';
-    return `${(Number(value) / 100).toFixed(2)}%`;
+    // Assuming percentage is stored as basis points (e.g., 400 = 4%)
+    return `${parseFloat(formatUnits(value, 2))}%`;
   };
 
   const formatAddress = (address: string | undefined) => {
     if (!address) return 'Loading...';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const getProtocolStatus = (ratio: bigint | undefined) => {
+    if (!ratio) {
+      return { label: 'Unknown', color: 'text-gray-500' };
+    }
+    
+    // Convert ratio to numeric percentage (assuming it's stored as basis points)
+    const ratioPercent = parseFloat(formatUnits(ratio, 2));
+    
+    if (ratioPercent >= 400) {
+      return { label: 'Healthy', color: 'text-green-500' };
+    } else if (ratioPercent >= 200) {
+      return { label: 'Caution', color: 'text-yellow-500' };
+    } else {
+      return { label: 'At Risk', color: 'text-red-500' };
+    }
   };
 
   return (
@@ -327,7 +345,9 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Protocol Status</span>
-                <span className="text-sm text-green-500 font-medium">Healthy</span>
+                <span className={`text-sm ${getProtocolStatus(ratio as bigint).color} font-medium`}>
+                  {getProtocolStatus(ratio as bigint).label}
+                </span>
               </div>
             </div>
           </CardContent>
