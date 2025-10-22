@@ -61,14 +61,6 @@ export default function Trade() {
   });
 
 
-  // Auto-retry trade after successful approval
-  useEffect(() => {
-    if (isApprovalConfirmed && approvalHash) {
-      // Clear the approval hash and execute the trade
-      setApprovalHash(undefined);
-      executeTrade();
-    }
-  }, [isApprovalConfirmed, approvalHash,executeTrade]);
 
   // Read contract data
   const { data: baseCoinAddress } = useReadContract({
@@ -272,6 +264,15 @@ export default function Trade() {
       console.error('Error executing trade:', err);
     }
   }, [amount, receiver, address, tradeType, amountRC, feeUI, ui, baseCoinAddress, writeContract]);
+
+  // Auto-retry trade after successful approval
+  useEffect(() => {
+    if (isApprovalConfirmed && approvalHash) {
+      // Clear the approval hash and execute the trade
+      setApprovalHash(undefined);
+      executeTrade();
+    }
+  }, [isApprovalConfirmed, approvalHash, executeTrade]);
 
   const formatNumber = (value: bigint | undefined, decimals: number = 18) => {
     if (!value) return '0';
