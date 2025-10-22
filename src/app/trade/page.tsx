@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { parseUnits, formatUnits, isAddress } from 'viem';
 import { 
   ArrowUpRight, 
   ArrowDownRight, 
@@ -113,20 +114,20 @@ export default function Trade() {
     if (amount && scPrice) {
       setIsCalculating(true);
       try {
-        const amountBN = BigInt(parseFloat(amount) * Math.pow(10, 18));
+        const amountBN = parseUnits(amount, 18);
         const priceBN = scPrice as bigint;
         
         let estimated = '0';
         if (tradeType === 'buy-stable' || tradeType === 'buy-reserve') {
           // For buying: amount / price = tokens received
-          estimated = (Number(amountBN) / Number(priceBN)).toFixed(6);
+          estimated = (Number(formatUnits(amountBN, 18)) / Number(formatUnits(priceBN, 18))).toFixed(6);
         } else if (tradeType === 'sell-stable') {
           // For selling stablecoins: amount * price = basecoins received
-          estimated = (Number(amountBN) * Number(priceBN) / Math.pow(10, 18)).toFixed(6);
+          estimated = (Number(formatUnits(amountBN, 18)) * Number(formatUnits(priceBN, 18))).toFixed(6);
         } else if (tradeType === 'sell-reserve') {
           // For selling reservecoins: amount * target price = basecoins received
           const targetPrice = rcTargetPrice as bigint;
-          estimated = (Number(amountBN) * Number(targetPrice) / Math.pow(10, 18)).toFixed(6);
+          estimated = (Number(formatUnits(amountBN, 18)) * Number(formatUnits(targetPrice, 18))).toFixed(6);
         }
         
         setEstimatedAmount(estimated);
@@ -160,8 +161,8 @@ export default function Trade() {
     if (!amount || !receiver || !address) return;
 
     try {
-      const amountBN = BigInt(parseFloat(amount) * Math.pow(10, 18));
-      const amountRCBN = amountRC ? BigInt(parseFloat(amountRC) * Math.pow(10, 18)) : BigInt(0);
+      const amountBN = parseUnits(amount, 18);
+      const amountRCBN = amountRC ? parseUnits(amountRC, 18) : 0n;
       const feeUIBn = BigInt(feeUI);
       const uiAddress = ui || address;
 
@@ -237,8 +238,8 @@ export default function Trade() {
 
     // Check if approval is needed for buy operations
     if ((tradeType === 'buy-stable' || tradeType === 'buy-reserve') && baseCoinAddress) {
-      const amountBN = BigInt(parseFloat(amount) * Math.pow(10, 18));
-      const currentAllowance = baseCoinAllowance || BigInt(0);
+      const amountBN = parseUnits(amount, 18);
+      const currentAllowance = baseCoinAllowance ?? 0n;
       
       if (currentAllowance < amountBN) {
         // First approve the Djed contract to spend BaseCoins
@@ -353,6 +354,21 @@ export default function Trade() {
         return 'RC';
       case 'sell-both':
         return 'SC';
+      default:
+        return '';
+    }
+  };
+
+  const getOutputTokenLabel = () => {
+    switch (tradeType) {
+      case 'buy-stable':
+        return 'SC';
+      case 'buy-reserve':
+        return 'RC';
+      case 'sell-stable':
+      case 'sell-reserve':
+      case 'sell-both':
+        return 'BC';
       default:
         return '';
     }
@@ -502,10 +518,10 @@ export default function Trade() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-slate-600 dark:text-slate-400">BaseCoin Allowance:</span>
                       <span className="font-medium">
-                        {formatNumber(baseCoinAllowance as bigint)} / {formatNumber(amount ? BigInt(parseFloat(amount) * Math.pow(10, 18)) : BigInt(0))} needed
+                        {formatNumber(baseCoinAllowance as bigint)} / {formatNumber(amount ? parseUnits(amount, 18) : 0n)} needed
                       </span>
                     </div>
-                    {baseCoinAllowance && amount && baseCoinAllowance < BigInt(parseFloat(amount) * Math.pow(10, 18)) && (
+                    {baseCoinAllowance && amount && baseCoinAllowance < parseUnits(amount, 18) && (
                       <div className="mt-2 text-xs text-orange-600 dark:text-orange-400">
                         ⚠️ Approval required - transaction will include approval step
                       </div>
@@ -588,7 +604,7 @@ export default function Trade() {
                     <span className="text-sm font-medium">{getEstimatedLabel()}:</span>
                     <div className="flex items-center gap-2">
                       {isCalculating && <Loader2 className="h-4 w-4 animate-spin" />}
-                      <span className="text-sm font-semibold">{estimatedAmount} {getBalanceLabel()}</span>
+                      <span className="text-sm font-semibold">{estimatedAmount} {getOutputTokenLabel()}</span>
                     </div>
                   </div>
                 </div>

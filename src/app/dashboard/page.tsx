@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
+import { formatUnits } from 'viem';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -105,17 +106,18 @@ export default function Dashboard() {
     args: address ? [address] : undefined,
   });
 
-  const { data: baseCoinBalance } = useReadContract({
+  const { data: baseCoinAddress } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'baseCoin',
   });
 
   const { data: userBaseCoinBalance } = useReadContract({
-    address: baseCoinBalance,
+    address: baseCoinAddress,
     abi: COIN_ABI,
     functionName: 'balanceOf',
-    args: address ? [address] : undefined,
+    args: baseCoinAddress && address ? [address] : undefined,
+    enabled: !!baseCoinAddress && !!address,
   });
 
   const handleRefresh = () => {
@@ -231,7 +233,9 @@ export default function Dashboard() {
                   {formatNumber(stableCoinBalance)}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  ≈ {formatPrice(stableCoinBalance)}
+                  ≈ {stableCoinBalance && scPrice ? 
+                    `$${(Number(formatUnits(stableCoinBalance, 18)) * Number(formatUnits(scPrice, 18))).toFixed(2)}` : 
+                    '$0.00'}
                 </div>
               </div>
 
@@ -244,8 +248,9 @@ export default function Dashboard() {
                   {formatNumber(reserveCoinBalance)}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  ≈ {formatPrice(rcTargetPrice && reserveCoinBalance ? 
-                    (rcTargetPrice * reserveCoinBalance) / BigInt(Math.pow(10, 18)) : 0n)}
+                  ≈ {reserveCoinBalance && rcTargetPrice ? 
+                    `$${(Number(formatUnits(reserveCoinBalance, 18)) * Number(formatUnits(rcTargetPrice, 18))).toFixed(2)}` : 
+                    '$0.00'}
                 </div>
               </div>
 

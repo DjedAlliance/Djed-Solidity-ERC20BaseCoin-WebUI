@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
+import { formatUnits } from 'viem';
 import { 
   Wallet, 
   TrendingUp, 
@@ -94,9 +95,9 @@ export default function Portfolio() {
   // Calculate total portfolio value
   useEffect(() => {
     if (stableCoinBalance && reserveCoinBalance && userBaseCoinBalance && scPrice && rcTargetPrice && oraclePrice) {
-      const scValue = Number(stableCoinBalance) * Number(scPrice) / Math.pow(10, 36);
-      const rcValue = Number(reserveCoinBalance) * Number(rcTargetPrice) / Math.pow(10, 36);
-      const bcValue = Number(userBaseCoinBalance) * Number(oraclePrice) / Math.pow(10, 36);
+      const scValue = getAssetValue(stableCoinBalance, scPrice);
+      const rcValue = getAssetValue(reserveCoinBalance, rcTargetPrice);
+      const bcValue = getAssetValue(userBaseCoinBalance, oraclePrice);
       setTotalValue(scValue + rcValue + bcValue);
     }
   }, [stableCoinBalance, reserveCoinBalance, userBaseCoinBalance, scPrice, rcTargetPrice, oraclePrice]);
@@ -105,14 +106,14 @@ export default function Portfolio() {
     setRefreshKey(prev => prev + 1);
   };
 
-  const formatNumber = (value: bigint | undefined, decimals: number = 18) => {
+  const formatNumber = (value: bigint | undefined, decimals: number = 18, precision = 4) => {
     if (!value) return '0';
-    return (Number(value) / Math.pow(10, decimals)).toFixed(4);
+    return Number(formatUnits(value, decimals)).toFixed(precision);
   };
 
-  const formatPrice = (value: bigint | undefined, decimals: number = 18) => {
+  const formatPrice = (value: bigint | undefined, decimals: number = 18, precision = 2) => {
     if (!value) return '$0.00';
-    return `$${(Number(value) / Math.pow(10, decimals)).toFixed(2)}`;
+    return `$${Number(formatUnits(value, decimals)).toFixed(precision)}`;
   };
 
   const formatPercentage = (value: bigint | undefined) => {
@@ -120,9 +121,16 @@ export default function Portfolio() {
     return `${(Number(value) / 100).toFixed(2)}%`;
   };
 
-  const getAssetValue = (balance: bigint | undefined, price: bigint | undefined) => {
+  const getAssetValue = (
+    balance: bigint | undefined,
+    price: bigint | undefined,
+    balanceDecimals = 18,
+    priceDecimals = 18
+  ) => {
     if (!balance || !price) return 0;
-    return Number(balance) * Number(price) / Math.pow(10, 36);
+    const b = Number(formatUnits(balance, balanceDecimals));
+    const p = Number(formatUnits(price, priceDecimals));
+    return b * p;
   };
 
   const getAssetPercentage = (assetValue: number) => {

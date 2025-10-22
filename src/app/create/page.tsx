@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { parseUnits } from 'viem';
 import { 
   Plus, 
   TrendingUp, 
@@ -44,7 +45,7 @@ export default function CreatePosition() {
 
     setIsCreating(true);
     try {
-      const amountBN = BigInt(parseFloat(amount) * Math.pow(10, 18));
+      const amountBN = parseUnits(amount, 18);
       
       if (selectedType === 'stable') {
         await writeContract({
@@ -52,7 +53,6 @@ export default function CreatePosition() {
           abi: DJED_ABI,
           functionName: 'buyStableCoins',
           args: [amountBN, address],
-          gas: BigInt(1000000), // 1M gas limit
         });
       } else {
         await writeContract({
@@ -60,7 +60,6 @@ export default function CreatePosition() {
           abi: DJED_ABI,
           functionName: 'buyReserveCoins',
           args: [amountBN, address],
-          gas: BigInt(1000000), // 1M gas limit
         });
       }
     } catch (error) {
