@@ -172,13 +172,6 @@ export default function Trade() {
     }
   }, [address, receiver]);
 
-  // Auto-trigger trade after approval is confirmed
-  useEffect(() => {
-    if (isApprovalConfirmed && (tradeType === 'buy-stable' || tradeType === 'buy-reserve')) {
-      // Execute the actual trade after approval is confirmed
-      executeTrade();
-    }
-  }, [isApprovalConfirmed, tradeType]);
 
   const executeTrade = async () => {
     if (!amount || !receiver || !address) return;
