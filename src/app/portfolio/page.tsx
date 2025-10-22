@@ -38,54 +38,54 @@ export default function Portfolio() {
   const [totalValue, setTotalValue] = useState(0);
 
   // Read protocol data
-  const { data: ratio } = useReadContract({
+  const { data: ratio, refetch: refetchRatio } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'ratio',
   });
 
-  const { data: scPrice } = useReadContract({
+  const { data: scPrice, refetch: refetchScPrice } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'scPrice',
     args: [0n],
   });
 
-  const { data: rcTargetPrice } = useReadContract({
+  const { data: rcTargetPrice, refetch: refetchRcTargetPrice } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'rcTargetPrice',
     args: [0n],
   });
 
-  const { data: oraclePrice } = useReadContract({
+  const { data: oraclePrice, refetch: refetchOraclePrice } = useReadContract({
     address: ORACLE_ADDRESS,
     abi: ORACLE_ABI,
     functionName: 'readData',
   });
 
   // Read user balances
-  const { data: stableCoinBalance } = useReadContract({
+  const { data: stableCoinBalance, refetch: refetchStableCoinBalance } = useReadContract({
     address: STABLE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
   });
 
-  const { data: reserveCoinBalance } = useReadContract({
+  const { data: reserveCoinBalance, refetch: refetchReserveCoinBalance } = useReadContract({
     address: RESERVE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
   });
 
-  const { data: baseCoinAddress } = useReadContract({
+  const { data: baseCoinAddress, refetch: refetchBaseCoinAddress } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'baseCoin',
   });
 
-  const { data: userBaseCoinBalance } = useReadContract({
+  const { data: userBaseCoinBalance, refetch: refetchUserBaseCoinBalance } = useReadContract({
     address: baseCoinAddress,
     abi: COIN_ABI,
     functionName: 'balanceOf',
@@ -104,6 +104,15 @@ export default function Portfolio() {
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+    // Refetch all contract data
+    refetchRatio();
+    refetchScPrice();
+    refetchRcTargetPrice();
+    refetchOraclePrice();
+    refetchStableCoinBalance();
+    refetchReserveCoinBalance();
+    refetchBaseCoinAddress();
+    refetchUserBaseCoinBalance();
   };
 
   const formatNumber = (value: bigint | undefined, decimals: number = 18, precision = 4) => {

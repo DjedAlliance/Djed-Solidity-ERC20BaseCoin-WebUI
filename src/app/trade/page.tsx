@@ -60,6 +60,15 @@ export default function Trade() {
     hash: approvalHash 
   });
 
+  // Auto-retry trade after successful approval
+  useEffect(() => {
+    if (isApprovalConfirmed && approvalHash) {
+      // Clear the approval hash and execute the trade
+      setApprovalHash(undefined);
+      executeTrade();
+    }
+  }, [isApprovalConfirmed, approvalHash]);
+
   // Read contract data
   const { data: baseCoinAddress } = useReadContract({
     address: DJED_ADDRESS,
@@ -88,11 +97,25 @@ export default function Trade() {
     args: address ? [address] : undefined,
   });
 
+  const { data: stableCoinAllowance } = useReadContract({
+    address: STABLE_COIN_ADDRESS,
+    abi: COIN_ABI,
+    functionName: 'allowance',
+    args: address && DJED_ADDRESS ? [address, DJED_ADDRESS] : undefined,
+  });
+
   const { data: reserveCoinBalance } = useReadContract({
     address: RESERVE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+  });
+
+  const { data: reserveCoinAllowance } = useReadContract({
+    address: RESERVE_COIN_ADDRESS,
+    abi: COIN_ABI,
+    functionName: 'allowance',
+    args: address && DJED_ADDRESS ? [address, DJED_ADDRESS] : undefined,
   });
 
   const { data: scPrice } = useReadContract({
@@ -163,7 +186,23 @@ export default function Trade() {
     try {
       const amountBN = parseUnits(amount, 18);
       const amountRCBN = amountRC ? parseUnits(amountRC, 18) : 0n;
-      const feeUIBn = BigInt(feeUI);
+      
+      // Safely parse feeUI to BigInt, defaulting to 0n for invalid input
+      const safeParseBigInt = (value: string): bigint => {
+        const trimmed = value.trim();
+        if (!trimmed || trimmed === '') return 0n;
+        
+        // Check if the string contains only digits (and optional leading minus)
+        if (!/^-?\d+$/.test(trimmed)) return 0n;
+        
+        try {
+          return BigInt(trimmed);
+        } catch {
+          return 0n;
+        }
+      };
+      
+      const feeUIBn = safeParseBigInt(feeUI);
       const uiAddress = ui || address;
 
       console.log('Executing trade:', {
@@ -236,7 +275,7 @@ export default function Trade() {
   const handleTrade = async () => {
     if (!amount || !receiver || !address) return;
 
-    // Check if approval is needed for buy operations
+    // Check if approval is needed for buy operations (BaseCoin approval)
     if ((tradeType === 'buy-stable' || tradeType === 'buy-reserve') && baseCoinAddress) {
       const amountBN = parseUnits(amount, 18);
       const currentAllowance = baseCoinAllowance ?? 0n;
@@ -259,7 +298,89 @@ export default function Trade() {
       }
     }
 
-    // For sell operations or when approval is not needed, execute trade directly
+    // Check if approval is needed for sell operations (StableCoin/ReserveCoin approval)
+    if (tradeType === 'sell-stable' && STABLE_COIN_ADDRESS) {
+      const amountBN = parseUnits(amount, 18);
+      const currentAllowance = stableCoinAllowance ?? 0n;
+      
+      if (currentAllowance < amountBN) {
+        // First approve the Djed contract to spend StableCoins
+        const approvalTxHash = await writeContract({
+          address: STABLE_COIN_ADDRESS as `0x${string}`,
+          abi: COIN_ABI,
+          functionName: 'approve',
+          args: [DJED_ADDRESS, amountBN],
+          gas: BigInt(100000), // 100K gas for approve
+        });
+        
+        if (approvalTxHash) {
+          setApprovalHash(approvalTxHash);
+          return; // Exit here, the actual trade will be triggered after approval
+        }
+      }
+    }
+
+    if (tradeType === 'sell-reserve' && RESERVE_COIN_ADDRESS) {
+      const amountBN = parseUnits(amount, 18);
+      const currentAllowance = reserveCoinAllowance ?? 0n;
+      
+      if (currentAllowance < amountBN) {
+        // First approve the Djed contract to spend ReserveCoins
+        const approvalTxHash = await writeContract({
+          address: RESERVE_COIN_ADDRESS as `0x${string}`,
+          abi: COIN_ABI,
+          functionName: 'approve',
+          args: [DJED_ADDRESS, amountBN],
+          gas: BigInt(100000), // 100K gas for approve
+        });
+        
+        if (approvalTxHash) {
+          setApprovalHash(approvalTxHash);
+          return; // Exit here, the actual trade will be triggered after approval
+        }
+      }
+    }
+
+    if (tradeType === 'sell-both' && STABLE_COIN_ADDRESS && RESERVE_COIN_ADDRESS) {
+      const amountBN = parseUnits(amount, 18);
+      const amountRCBN = amountRC ? parseUnits(amountRC, 18) : 0n;
+      const stableAllowance = stableCoinAllowance ?? 0n;
+      const reserveAllowance = reserveCoinAllowance ?? 0n;
+      
+      // Check StableCoin approval
+      if (stableAllowance < amountBN) {
+        const approvalTxHash = await writeContract({
+          address: STABLE_COIN_ADDRESS as `0x${string}`,
+          abi: COIN_ABI,
+          functionName: 'approve',
+          args: [DJED_ADDRESS, amountBN],
+          gas: BigInt(100000),
+        });
+        
+        if (approvalTxHash) {
+          setApprovalHash(approvalTxHash);
+          return;
+        }
+      }
+      
+      // Check ReserveCoin approval
+      if (reserveAllowance < amountRCBN) {
+        const approvalTxHash = await writeContract({
+          address: RESERVE_COIN_ADDRESS as `0x${string}`,
+          abi: COIN_ABI,
+          functionName: 'approve',
+          args: [DJED_ADDRESS, amountRCBN],
+          gas: BigInt(100000),
+        });
+        
+        if (approvalTxHash) {
+          setApprovalHash(approvalTxHash);
+          return;
+        }
+      }
+    }
+
+    // For operations that don't need approval or when approval is not needed, execute trade directly
     await executeTrade();
   };
 
@@ -522,6 +643,62 @@ export default function Trade() {
                       </span>
                     </div>
                     {baseCoinAllowance && amount && baseCoinAllowance < parseUnits(amount, 18) && (
+                      <div className="mt-2 text-xs text-orange-600 dark:text-orange-400">
+                        ⚠️ Approval required - transaction will include approval step
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Approval Status for Sell Operations */}
+                {tradeType === 'sell-stable' && STABLE_COIN_ADDRESS && (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">StableCoin Allowance:</span>
+                      <span className="font-medium">
+                        {formatNumber(stableCoinAllowance as bigint)} / {formatNumber(amount ? parseUnits(amount, 18) : 0n)} needed
+                      </span>
+                    </div>
+                    {stableCoinAllowance && amount && stableCoinAllowance < parseUnits(amount, 18) && (
+                      <div className="mt-2 text-xs text-orange-600 dark:text-orange-400">
+                        ⚠️ Approval required - transaction will include approval step
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {tradeType === 'sell-reserve' && RESERVE_COIN_ADDRESS && (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">ReserveCoin Allowance:</span>
+                      <span className="font-medium">
+                        {formatNumber(reserveCoinAllowance as bigint)} / {formatNumber(amount ? parseUnits(amount, 18) : 0n)} needed
+                      </span>
+                    </div>
+                    {reserveCoinAllowance && amount && reserveCoinAllowance < parseUnits(amount, 18) && (
+                      <div className="mt-2 text-xs text-orange-600 dark:text-orange-400">
+                        ⚠️ Approval required - transaction will include approval step
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {tradeType === 'sell-both' && STABLE_COIN_ADDRESS && RESERVE_COIN_ADDRESS && (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">StableCoin Allowance:</span>
+                      <span className="font-medium">
+                        {formatNumber(stableCoinAllowance as bigint)} / {formatNumber(amount ? parseUnits(amount, 18) : 0n)} needed
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">ReserveCoin Allowance:</span>
+                      <span className="font-medium">
+                        {formatNumber(reserveCoinAllowance as bigint)} / {formatNumber(amountRC ? parseUnits(amountRC, 18) : 0n)} needed
+                      </span>
+                    </div>
+                    {((stableCoinAllowance && amount && stableCoinAllowance < parseUnits(amount, 18)) || 
+                      (reserveCoinAllowance && amountRC && reserveCoinAllowance < parseUnits(amountRC, 18))) && (
                       <div className="mt-2 text-xs text-orange-600 dark:text-orange-400">
                         ⚠️ Approval required - transaction will include approval step
                       </div>

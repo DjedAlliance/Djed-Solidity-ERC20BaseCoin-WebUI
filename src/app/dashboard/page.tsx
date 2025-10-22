@@ -34,85 +34,85 @@ export default function Dashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Read protocol data
-  const { data: ratio } = useReadContract({
+  const { data: ratio, refetch: refetchRatio } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'ratio',
   });
 
-  const { data: reserveAmount } = useReadContract({
+  const { data: reserveAmount, refetch: refetchReserveAmount } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'R',
     args: [0n],
   });
 
-  const { data: liabilities } = useReadContract({
+  const { data: liabilities, refetch: refetchLiabilities } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'L',
   });
 
-  const { data: scPrice } = useReadContract({
+  const { data: scPrice, refetch: refetchScPrice } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'scPrice',
     args: [0n],
   });
 
-  const { data: rcTargetPrice } = useReadContract({
+  const { data: rcTargetPrice, refetch: refetchRcTargetPrice } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'rcTargetPrice',
     args: [0n],
   });
 
-  const { data: oraclePrice } = useReadContract({
+  const { data: oraclePrice, refetch: refetchOraclePrice } = useReadContract({
     address: ORACLE_ADDRESS,
     abi: ORACLE_ABI,
     functionName: 'readData',
   });
 
-  const { data: fee } = useReadContract({
+  const { data: fee, refetch: refetchFee } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'fee',
   });
 
-  const { data: treasuryFee } = useReadContract({
+  const { data: treasuryFee, refetch: refetchTreasuryFee } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'treasuryFee',
   });
 
-  const { data: txLimit } = useReadContract({
+  const { data: txLimit, refetch: refetchTxLimit } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'txLimit',
   });
 
   // Read user balances
-  const { data: stableCoinBalance } = useReadContract({
+  const { data: stableCoinBalance, refetch: refetchStableCoinBalance } = useReadContract({
     address: STABLE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
   });
 
-  const { data: reserveCoinBalance } = useReadContract({
+  const { data: reserveCoinBalance, refetch: refetchReserveCoinBalance } = useReadContract({
     address: RESERVE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
   });
 
-  const { data: baseCoinAddress } = useReadContract({
+  const { data: baseCoinAddress, refetch: refetchBaseCoinAddress } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'baseCoin',
   });
 
-  const { data: userBaseCoinBalance } = useReadContract({
+  const { data: userBaseCoinBalance, refetch: refetchUserBaseCoinBalance } = useReadContract({
     address: baseCoinAddress,
     abi: COIN_ABI,
     functionName: 'balanceOf',
@@ -122,6 +122,20 @@ export default function Dashboard() {
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+    // Refetch all contract data
+    refetchRatio();
+    refetchReserveAmount();
+    refetchLiabilities();
+    refetchScPrice();
+    refetchRcTargetPrice();
+    refetchOraclePrice();
+    refetchFee();
+    refetchTreasuryFee();
+    refetchTxLimit();
+    refetchStableCoinBalance();
+    refetchReserveCoinBalance();
+    refetchBaseCoinAddress();
+    refetchUserBaseCoinBalance();
   };
 
   const formatNumber = (value: bigint | undefined, decimals: number = 18) => {

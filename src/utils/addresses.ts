@@ -1,3 +1,5 @@
+import { isAddress } from 'viem';
+
 // Chain-aware contract addresses
 export type ChainId = 1 | 137 | 56 | 8453 | 11155111 | 61;
 
@@ -20,7 +22,7 @@ const validateAddress = (address: string, name: string, chainId: ChainId, allowZ
     throw new Error(`Invalid ${name} address for chain ${chainId}: ${address}`);
   }
   
-  if (!address.startsWith('0x') || address.length !== 42) {
+  if (!isAddress(address)) {
     throw new Error(`Invalid ${name} address format for chain ${chainId}: ${address}`);
   }
   return address as `0x${string}`;
