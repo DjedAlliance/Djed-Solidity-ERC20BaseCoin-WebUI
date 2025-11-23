@@ -92,13 +92,13 @@ export default function Dashboard() {
   });
 
   // Read system-wide token supplies
-  const { data: stableCoinTotalSupply, refetch: refetchStableCoinTotalSupply } = useReadContract({
+  const { data: stablecoinTotalSupply, refetch: refetchStablecoinTotalSupply } = useReadContract({
     address: STABLE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'totalSupply',
   });
 
-  const { data: reserveCoinTotalSupply, refetch: refetchReserveCoinTotalSupply } = useReadContract({
+  const { data: reserveCoinTotalSupply, refetch: refetchLeveragedYieldCoinTotalSupply } = useReadContract({
     address: RESERVE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'totalSupply',
@@ -122,8 +122,8 @@ export default function Dashboard() {
     refetchFee();
     refetchTreasuryFee();
     refetchTxLimit();
-    refetchStableCoinTotalSupply();
-    refetchReserveCoinTotalSupply();
+    refetchStablecoinTotalSupply();
+    refetchLeveragedYieldCoinTotalSupply();
     refetchBaseCoinAddress();
   };
 
@@ -185,7 +185,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">StableCoin Price</CardTitle>
+            <CardTitle className="text-sm font-medium">Stablecoin Price</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -224,13 +224,15 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Liabilities</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Leverage Ratio</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(liabilities as bigint)}</div>
+            <div className="text-2xl font-bold">
+              {ratio ? (1 / (parseFloat(formatUnits(ratio as bigint, 2)) - 1)).toFixed(2) : '0'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Outstanding StableCoins
+              1 / (Reserve Ratio - 1)
             </p>
           </CardContent>
         </Card>
@@ -251,7 +253,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">StableCoins (SC)</span>
+                <span className="text-sm font-medium">Stablecoins (SC)</span>
                 <ArrowUpRight className="h-4 w-4 text-green-500" />
               </div>
               <div className="text-2xl font-bold">
@@ -264,7 +266,7 @@ export default function Dashboard() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">ReserveCoins (RC)</span>
+                <span className="text-sm font-medium">Leveraged Yield Coins (LYC)</span>
                 <ArrowDownRight className="h-4 w-4 text-blue-500" />
               </div>
               <div className="text-2xl font-bold">
@@ -340,7 +342,7 @@ export default function Dashboard() {
                 <span className="text-sm">{formatPrice(oraclePrice as bigint)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">ReserveCoin Target Price</span>
+                <span className="text-sm font-medium">Leveraged Yield Coin Target Price</span>
                 <span className="text-sm">{formatPrice(rcTargetPrice as bigint)}</span>
               </div>
               <div className="flex items-center justify-between">

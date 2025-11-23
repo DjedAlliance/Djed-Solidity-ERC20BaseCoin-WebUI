@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Djed Protocol",
   description:
-    "Algorithmic stablecoin protocol. Buy and sell stablecoins with a user-friendly interface for the Djed algorithmic stablecoin system.",
+    "Algorithmic stablecoin protocol. Mint and sell stablecoins with a user-friendly interface for the Djed algorithmic stablecoin system.",
   icons: {
     icon: "/next-icon.svg",
     shortcut: "/next-icon.svg",

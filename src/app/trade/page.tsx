@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseUnits, formatUnits, isAddress } from 'viem';
-import { 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  Calculator, 
-  Info, 
-  CheckCircle, 
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  Calculator,
+  Info,
+  CheckCircle,
   AlertCircle,
   Loader2,
   RefreshCw,
@@ -16,11 +17,11 @@ import {
   TrendingDown,
   DollarSign
 } from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   Button,
   Input,
@@ -40,7 +41,9 @@ import { DJED_ADDRESS, STABLE_COIN_ADDRESS, RESERVE_COIN_ADDRESS } from '@/utils
 
 type TradeType = 'buy-stable' | 'sell-stable' | 'buy-reserve' | 'sell-reserve' | 'sell-both';
 
-export default function Trade() {
+function TradePage() {
+  const searchParams = useSearchParams();
+  const contractAddress = searchParams.get('address') || DJED_ADDRESS;
   const { address, isConnected } = useAccount();
   const [tradeType, setTradeType] = useState<TradeType>('buy-stable');
   const [amount, setAmount] = useState('');
@@ -64,7 +67,7 @@ export default function Trade() {
 
   // Read contract data
   const { data: baseCoinAddress } = useReadContract({
-    address: DJED_ADDRESS,
+    address: contractAddress as `0x${string}`,
     abi: DJED_ABI,
     functionName: 'baseCoin',
   });
@@ -80,7 +83,7 @@ export default function Trade() {
     address: baseCoinAddress as `0x${string}`,
     abi: COIN_ABI,
     functionName: 'allowance',
-    args: address && DJED_ADDRESS ? [address, DJED_ADDRESS] : undefined,
+    args: address && contractAddress ? [address, contractAddress] : undefined,
   });
 
   const { data: stableCoinBalance } = useReadContract({
@@ -94,7 +97,7 @@ export default function Trade() {
     address: STABLE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'allowance',
-    args: address && DJED_ADDRESS ? [address, DJED_ADDRESS] : undefined,
+    args: address && contractAddress ? [address, contractAddress] : undefined,
   });
 
   const { data: reserveCoinBalance } = useReadContract({
@@ -108,21 +111,39 @@ export default function Trade() {
     address: RESERVE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'allowance',
-    args: address && DJED_ADDRESS ? [address, DJED_ADDRESS] : undefined,
+    args: address && contractAddress ? [address, contractAddress] : undefined,
   });
 
   const { data: scPrice } = useReadContract({
-    address: DJED_ADDRESS,
+    address: contractAddress as `0x${string}`,
     abi: DJED_ABI,
     functionName: 'scPrice',
     args: [BigInt(0)],
   });
 
   const { data: rcTargetPrice } = useReadContract({
-    address: DJED_ADDRESS,
+    address: contractAddress as `0x${string}`,
     abi: DJED_ABI,
     functionName: 'rcTargetPrice',
     args: [BigInt(0)],
+  });
+
+  const { data: fee } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: DJED_ABI,
+    functionName: 'fee',
+  });
+
+  const { data: treasuryFee } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: DJED_ABI,
+    functionName: 'treasuryFee',
+  });
+
+  const { data: txLimit } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: DJED_ABI,
+    functionName: 'txLimit',
   });
 
   // Calculate estimated amounts
@@ -147,7 +168,7 @@ export default function Trade() {
           // For selling stablecoins: amount * price / DECIMALS = basecoins received
           estimatedScaled = (amountBN * priceBN) / DECIMALS;
         } else if (tradeType === 'sell-reserve') {
-          // For selling reservecoins: amount * target price / DECIMALS = basecoins received
+          // For selling Leveraged Yield Coins: amount * target price / DECIMALS = basecoins received
           const targetPrice = rcTargetPrice as bigint;
           estimatedScaled = (amountBN * targetPrice) / DECIMALS;
         } else {
@@ -219,24 +240,24 @@ export default function Trade() {
       switch (tradeType) {
         case 'buy-stable':
           writeContract({
-            address: DJED_ADDRESS,
+            address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
-            functionName: 'buyStableCoins',
+            functionName: 'buyStablecoins',
             args: [receiver, feeUIBn, uiAddress, amountBN],
             gas: BigInt(8000000), // 8M gas limit - reduced from 15M
           });
           break;
         case 'sell-stable':
           writeContract({
-            address: DJED_ADDRESS,
+            address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
-            functionName: 'sellStableCoins',
+            functionName: 'sellStablecoins',
             args: [amountBN, receiver, feeUIBn, uiAddress],
           });
           break;
         case 'buy-reserve':
           writeContract({
-            address: DJED_ADDRESS,
+            address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
             functionName: 'buyReserveCoins',
             args: [receiver, feeUIBn, uiAddress, amountBN],
@@ -245,7 +266,7 @@ export default function Trade() {
           break;
         case 'sell-reserve':
           writeContract({
-            address: DJED_ADDRESS,
+            address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
             functionName: 'sellReserveCoins',
             args: [amountBN, receiver, feeUIBn, uiAddress],
@@ -253,7 +274,7 @@ export default function Trade() {
           break;
         case 'sell-both':
           writeContract({
-            address: DJED_ADDRESS,
+            address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
             functionName: 'sellBothCoins',
             args: [amountBN, amountRCBN, receiver, feeUIBn, uiAddress],
@@ -284,6 +305,12 @@ export default function Trade() {
     return `$${(Number(value) / Math.pow(10, decimals)).toFixed(4)}`;
   };
 
+  const formatPercentage = (value: bigint | undefined) => {
+    if (!value) return '0%';
+    // Assuming percentage is stored as basis points (e.g., 400 = 4%)
+    return `${parseFloat(formatUnits(value, 2))}%`;
+  };
+
   const handleTrade = async () => {
     if (!amount || !receiver || !address) return;
 
@@ -298,7 +325,7 @@ export default function Trade() {
           address: baseCoinAddress as `0x${string}`,
           abi: COIN_ABI,
           functionName: 'approve',
-          args: [DJED_ADDRESS, amountBN],
+          args: [contractAddress, amountBN],
           gas: BigInt(100000), // 100K gas for approve
         });
         
@@ -310,18 +337,18 @@ export default function Trade() {
       }
     }
 
-    // Check if approval is needed for sell operations (StableCoin/ReserveCoin approval)
+    // Check if approval is needed for sell operations (Stablecoin/Leveraged Yield Coin approval)
     if (tradeType === 'sell-stable' && STABLE_COIN_ADDRESS) {
       const amountBN = parseUnits(amount, 18);
       const currentAllowance = stableCoinAllowance ?? 0n;
       
       if (currentAllowance < amountBN) {
-        // First approve the Djed contract to spend StableCoins
+        // First approve the Djed contract to spend Stablecoins
         const approvalTxHash = await writeContract({
           address: STABLE_COIN_ADDRESS as `0x${string}`,
           abi: COIN_ABI,
           functionName: 'approve',
-          args: [DJED_ADDRESS, amountBN],
+          args: [contractAddress, amountBN],
           gas: BigInt(100000), // 100K gas for approve
         });
         
@@ -337,12 +364,12 @@ export default function Trade() {
       const currentAllowance = reserveCoinAllowance ?? 0n;
       
       if (currentAllowance < amountBN) {
-        // First approve the Djed contract to spend ReserveCoins
+        // First approve the Djed contract to spend Leveraged Yield Coins
         const approvalTxHash = await writeContract({
           address: RESERVE_COIN_ADDRESS as `0x${string}`,
           abi: COIN_ABI,
           functionName: 'approve',
-          args: [DJED_ADDRESS, amountBN],
+          args: [contractAddress, amountBN],
           gas: BigInt(100000), // 100K gas for approve
         });
         
@@ -359,13 +386,13 @@ export default function Trade() {
       const stableAllowance = stableCoinAllowance ?? 0n;
       const reserveAllowance = reserveCoinAllowance ?? 0n;
       
-      // Check StableCoin approval
+      // Check Stablecoin approval
       if (stableAllowance < amountBN) {
         const approvalTxHash = await writeContract({
           address: STABLE_COIN_ADDRESS as `0x${string}`,
           abi: COIN_ABI,
           functionName: 'approve',
-          args: [DJED_ADDRESS, amountBN],
+          args: [contractAddress, amountBN],
           gas: BigInt(100000),
         });
         
@@ -375,13 +402,13 @@ export default function Trade() {
         }
       }
       
-      // Check ReserveCoin approval
+      // Check Leveraged Yield Coin approval
       if (reserveAllowance < amountRCBN) {
         const approvalTxHash = await writeContract({
           address: RESERVE_COIN_ADDRESS as `0x${string}`,
           abi: COIN_ABI,
           functionName: 'approve',
-          args: [DJED_ADDRESS, amountRCBN],
+          args: [contractAddress, amountRCBN],
           gas: BigInt(100000),
         });
         
@@ -413,15 +440,15 @@ export default function Trade() {
   const getTradeTitle = () => {
     switch (tradeType) {
       case 'buy-stable':
-        return 'Buy StableCoins';
+        return 'Mint Stablecoins';
       case 'sell-stable':
-        return 'Sell StableCoins';
+        return 'Redeem Stablecoins';
       case 'buy-reserve':
-        return 'Buy ReserveCoins';
+        return 'Mint Leveraged Yield Coins';
       case 'sell-reserve':
-        return 'Sell ReserveCoins';
+        return 'Redeem Leveraged Yield Coins';
       case 'sell-both':
-        return 'Sell Both Coins';
+        return 'Redeem Both Coins';
       default:
         return 'Trade';
     }
@@ -430,15 +457,15 @@ export default function Trade() {
   const getTradeDescription = () => {
     switch (tradeType) {
       case 'buy-stable':
-        return 'Exchange your BaseCoins for StableCoins at the current market price.';
+        return 'Exchange your BaseCoins for Stablecoins at the current market price.';
       case 'sell-stable':
-        return 'Exchange your StableCoins back to BaseCoins at the current market price.';
+        return 'Exchange your Stablecoins back to BaseCoins at the current market price.';
       case 'buy-reserve':
-        return 'Exchange your BaseCoins for ReserveCoins at the current market price.';
+        return 'Exchange your BaseCoins for Leveraged Yield Coins at the current market price.';
       case 'sell-reserve':
-        return 'Exchange your ReserveCoins back to BaseCoins at the current market price.';
+        return 'Exchange your Leveraged Yield Coins back to BaseCoins at the current market price.';
       case 'sell-both':
-        return 'Exchange both your StableCoins and ReserveCoins back to BaseCoins.';
+        return 'Exchange both your Stablecoins and Leveraged Yield Coins back to BaseCoins.';
       default:
         return 'Trade your tokens on the Djed protocol.';
     }
@@ -450,11 +477,11 @@ export default function Trade() {
       case 'buy-reserve':
         return 'Amount (BaseCoins)';
       case 'sell-stable':
-        return 'Amount (StableCoins)';
+        return 'Amount (Stablecoins)';
       case 'sell-reserve':
-        return 'Amount (ReserveCoins)';
+        return 'Amount (Leveraged Yield Coins)';
       case 'sell-both':
-        return 'Amount (StableCoins)';
+        return 'Amount (Stablecoins)';
       default:
         return 'Amount';
     }
@@ -591,31 +618,31 @@ export default function Trade() {
                       <SelectItem value="buy-stable" className="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700">
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-green-500" />
-                          Buy StableCoins
+                          Mint Stablecoins
                         </div>
                       </SelectItem>
                       <SelectItem value="sell-stable" className="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700">
                         <div className="flex items-center gap-2">
                           <TrendingDown className="h-4 w-4 text-red-500" />
-                          Sell StableCoins
+                          Redeem Stablecoins
                         </div>
                       </SelectItem>
                       <SelectItem value="buy-reserve" className="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700">
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-blue-500" />
-                          Buy ReserveCoins
+                          Mint Leveraged Yield Coins
                         </div>
                       </SelectItem>
                       <SelectItem value="sell-reserve" className="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700">
                         <div className="flex items-center gap-2">
                           <TrendingDown className="h-4 w-4 text-orange-500" />
-                          Sell ReserveCoins
+                          Redeem Leveraged Yield Coins
                         </div>
                       </SelectItem>
                       <SelectItem value="sell-both" className="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700">
                         <div className="flex items-center gap-2">
                           <TrendingDown className="h-4 w-4 text-purple-500" />
-                          Sell Both Coins
+                          Redeem Both Coins
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -645,7 +672,7 @@ export default function Trade() {
                   </div>
                 </div>
 
-                {/* Approval Status for Buy Operations */}
+                {/* Approval Status for Mint Operations */}
                 {(tradeType === 'buy-stable' || tradeType === 'buy-reserve') && baseCoinAddress && (
                   <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
@@ -662,11 +689,11 @@ export default function Trade() {
                   </div>
                 )}
 
-                {/* Approval Status for Sell Operations */}
+                {/* Approval Status for Redeem Operations */}
                 {tradeType === 'sell-stable' && STABLE_COIN_ADDRESS && (
                   <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">StableCoin Allowance:</span>
+                      <span className="text-slate-600 dark:text-slate-400">Stablecoin Allowance:</span>
                       <span className="font-medium">
                         {formatNumber(stableCoinAllowance as bigint)} / {formatNumber(amount ? parseUnits(amount, 18) : 0n)} needed
                       </span>
@@ -682,7 +709,7 @@ export default function Trade() {
                 {tradeType === 'sell-reserve' && RESERVE_COIN_ADDRESS && (
                   <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">ReserveCoin Allowance:</span>
+                      <span className="text-slate-600 dark:text-slate-400">Leveraged Yield Coin Allowance:</span>
                       <span className="font-medium">
                         {formatNumber(reserveCoinAllowance as bigint)} / {formatNumber(amount ? parseUnits(amount, 18) : 0n)} needed
                       </span>
@@ -698,13 +725,13 @@ export default function Trade() {
                 {tradeType === 'sell-both' && STABLE_COIN_ADDRESS && RESERVE_COIN_ADDRESS && (
                   <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">StableCoin Allowance:</span>
+                      <span className="text-slate-600 dark:text-slate-400">Stablecoin Allowance:</span>
                       <span className="font-medium">
                         {formatNumber(stableCoinAllowance as bigint)} / {formatNumber(amount ? parseUnits(amount, 18) : 0n)} needed
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">ReserveCoin Allowance:</span>
+                      <span className="text-slate-600 dark:text-slate-400">Leveraged Yield Coin Allowance:</span>
                       <span className="font-medium">
                         {formatNumber(reserveCoinAllowance as bigint)} / {formatNumber(amountRC ? parseUnits(amountRC, 18) : 0n)} needed
                       </span>
@@ -718,10 +745,10 @@ export default function Trade() {
                   </div>
                 )}
 
-                {/* Reserve Coin Amount (for sell-both) */}
+                {/* Leveraged Yield Coin Amount (for sell-both) */}
                 {tradeType === 'sell-both' && (
                   <div className="space-y-2">
-                    <Label htmlFor="amountRC">Amount (ReserveCoins)</Label>
+                    <Label htmlFor="amountRC">Amount (Leveraged Yield Coins)</Label>
                     <Input
                       id="amountRC"
                       type="number"
@@ -864,11 +891,11 @@ export default function Trade() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">StableCoin Price</span>
+                    <span className="text-sm text-muted-foreground">Stablecoin Price</span>
                     <span className="text-sm font-medium">{formatPrice(scPrice as bigint)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">ReserveCoin Target</span>
+                    <span className="text-sm text-muted-foreground">Leveraged Yield Coin Target</span>
                     <span className="text-sm font-medium">{formatPrice(rcTargetPrice as bigint)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -885,16 +912,36 @@ export default function Trade() {
 
             <Card>
               <CardHeader>
+                <CardTitle>Fees & Limits</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Trading Fee</span>
+                  <span className="text-sm font-medium">{formatPercentage(fee as bigint)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Treasury Fee</span>
+                  <span className="text-sm font-medium">{formatPercentage(treasuryFee as bigint)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Transaction Limit</span>
+                  <span className="text-sm font-medium">{formatNumber(txLimit as bigint)}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>How it works</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="flex items-start gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
-                  <p>StableCoins maintain a stable value pegged to $1.00</p>
+                  <p>Stablecoins maintain a stable value pegged to $1.00</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                  <p>ReserveCoins provide backing for price stability</p>
+                  <p>Leveraged Yield Coins provide backing for price stability</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0" />
@@ -906,5 +953,13 @@ export default function Trade() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Trade() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TradePage />
+    </Suspense>
   );
 }

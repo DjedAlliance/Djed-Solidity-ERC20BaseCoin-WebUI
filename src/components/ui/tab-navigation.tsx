@@ -27,16 +27,48 @@ const TabNavigation = () => {
         {/* Left Spacer */}
         <div
           className={`${spacerBase} rounded-l-3xl ${
-            hoveredTab === 'dashboard'
+            hoveredTab === 'explore'
               ? 'rounded-tr-2xl duration-500'
               : 'rounded-tr-none duration-200'
           }`}
         ></div>
 
+        {/* Explore */}
+        <div
+          className={`${tabBase} ${
+            hoveredTab === 'create' ? 'rounded-tr-2xl duration-500' : 'rounded-tr-none duration-200'
+          }`}
+          onMouseEnter={() => setHoveredTab('explore')}
+          onMouseLeave={() => setHoveredTab(null)}
+        >
+          <Link href="/explore" className={`${linkBase} group-hover:rounded-b-2xl ${isActive('/explore') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
+            Explore
+          </Link>
+        </div>
+
+        {/* Create */}
+        <div
+          className={`${tabBase} ${
+            hoveredTab === 'explore'
+              ? 'rounded-tl-2xl duration-500'
+              : hoveredTab === 'dashboard'
+              ? 'rounded-tr-2xl duration-500'
+              : 'rounded-tl-none rounded-tr-none duration-200'
+          }`}
+          onMouseEnter={() => setHoveredTab('create')}
+          onMouseLeave={() => setHoveredTab(null)}
+        >
+          <Link href="/create" className={`${linkBase} group-hover:rounded-b-2xl ${isActive('/create') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
+            Create
+          </Link>
+        </div>
+
         {/* Dashboard */}
         <div
           className={`${tabBase} ${
-            hoveredTab === 'portfolio' ? 'rounded-tr-2xl duration-500' : 'rounded-tr-none duration-200'
+            hoveredTab === 'create'
+              ? 'rounded-tl-2xl duration-500'
+              : 'rounded-tl-none duration-200'
           }`}
           onMouseEnter={() => setHoveredTab('dashboard')}
           onMouseLeave={() => setHoveredTab(null)}
@@ -46,42 +78,12 @@ const TabNavigation = () => {
           </Link>
         </div>
 
-        {/* Portfolio */}
-        <div
-          className={`${tabBase} ${
-            hoveredTab === 'dashboard'
-              ? 'rounded-tl-2xl duration-500'
-              : hoveredTab === 'trade'
-              ? 'rounded-tr-2xl duration-500'
-              : 'rounded-tl-none rounded-tr-none duration-200'
-          }`}
-          onMouseEnter={() => setHoveredTab('portfolio')}
-          onMouseLeave={() => setHoveredTab(null)}
-        >
-          <Link href="/portfolio" className={`${linkBase} group-hover:rounded-b-2xl ${isActive('/portfolio') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
-            Portfolio
-          </Link>
-        </div>
 
-        {/* Trade */}
-        <div
-          className={`${tabBase} ${
-            hoveredTab === 'portfolio'
-              ? 'rounded-tl-2xl duration-500'
-              : 'rounded-tl-none duration-200'
-          }`}
-          onMouseEnter={() => setHoveredTab('trade')}
-          onMouseLeave={() => setHoveredTab(null)}
-        >
-          <Link href="/trade" className={`${linkBase} group-hover:rounded-b-2xl ${isActive('/trade') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
-            Trade
-          </Link>
-        </div>
 
         {/* Right Spacer */}
         <div
           className={`${spacerBase} rounded-r-3xl ${
-            hoveredTab === 'trade'
+            hoveredTab === 'dashboard'
               ? 'rounded-tl-2xl duration-500'
               : 'rounded-tl-none duration-200'
           }`}

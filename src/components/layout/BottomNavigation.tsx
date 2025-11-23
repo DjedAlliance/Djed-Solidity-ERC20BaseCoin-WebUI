@@ -24,18 +24,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ isConnected }) => {
       label: "Dashboard",
       isActive: pathname === "/dashboard"
     },
-    {
-      href: "/trade",
-      icon: TrendingUp,
-      label: "Trade",
-      isActive: pathname === "/trade"
-    },
-    {
-      href: "/portfolio",
-      icon: User,
-      label: "Portfolio",
-      isActive: pathname === "/portfolio"
-    }
   ];
 
   return (

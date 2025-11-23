@@ -30,8 +30,6 @@ const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/trade', label: 'Trade' },
-    { href: '/portfolio', label: 'Portfolio' },
   ];
 
   return (
