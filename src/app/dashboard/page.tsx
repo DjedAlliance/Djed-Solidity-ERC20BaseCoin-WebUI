@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { formatUnits } from 'viem';
 import { 
   TrendingUp, 
-  TrendingDown, 
   DollarSign, 
   Shield, 
   Activity,
@@ -16,13 +15,12 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   Button,
-  Loading
+  GlowCard
 } from '@/components/ui';
 import DJED_ABI from '@/utils/abi/Djed.json';
 import COIN_ABI from '@/utils/abi/Coin.json';
@@ -30,8 +28,8 @@ import ORACLE_ABI from '@/utils/abi/IOracle.json';
 import { DJED_ADDRESS, STABLE_COIN_ADDRESS, RESERVE_COIN_ADDRESS, ORACLE_ADDRESS } from '@/utils/addresses';
 
 export default function Dashboard() {
-  const { address, isConnected } = useAccount();
-  const [refreshKey, setRefreshKey] = useState(0);
+  const {  } = useAccount();
+  const [ , setRefreshKey] = useState(0);
 
   // Read protocol data
   const { data: ratio, refetch: refetchRatio } = useReadContract({
@@ -47,7 +45,7 @@ export default function Dashboard() {
     args: [0n],
   });
 
-  const { data: liabilities, refetch: refetchLiabilities } = useReadContract({
+  const { refetch: refetchLiabilities } = useReadContract({
     address: DJED_ADDRESS,
     abi: DJED_ABI,
     functionName: 'L',
@@ -98,7 +96,7 @@ export default function Dashboard() {
     functionName: 'totalSupply',
   });
 
-  const { data: reserveCoinTotalSupply, refetch: refetchLeveragedYieldCoinTotalSupply } = useReadContract({
+  const { data: reserveCoinTotalSupply, refetch: refetchReserveCoinTotalSupply } = useReadContract({
     address: RESERVE_COIN_ADDRESS,
     abi: COIN_ABI,
     functionName: 'totalSupply',
@@ -123,7 +121,7 @@ export default function Dashboard() {
     refetchTreasuryFee();
     refetchTxLimit();
     refetchStablecoinTotalSupply();
-    refetchLeveragedYieldCoinTotalSupply();
+    refetchReserveCoinTotalSupply();
     refetchBaseCoinAddress();
   };
 
@@ -166,24 +164,32 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Monitor Djed Protocol system health and analytics
-          </p>
-        </div>
-        <Button onClick={handleRefresh} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-surface to-background" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Monitor Djed Protocol system health and analytics
+            </p>
+          </div>
+          <Button onClick={handleRefresh} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
 
       {/* Protocol Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <GlowCard>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stablecoin Price</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -194,9 +200,9 @@ export default function Dashboard() {
               Target: $1.00
             </p>
           </CardContent>
-        </Card>
+        </GlowCard>
 
-        <Card>
+        <GlowCard>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Reserve Ratio</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
@@ -207,9 +213,9 @@ export default function Dashboard() {
               Protocol health indicator
             </p>
           </CardContent>
-        </Card>
+        </GlowCard>
 
-        <Card>
+        <GlowCard>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Reserves</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -220,9 +226,9 @@ export default function Dashboard() {
               BaseCoin reserves
             </p>
           </CardContent>
-        </Card>
+        </GlowCard>
 
-        <Card>
+        <GlowCard>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Leverage Ratio</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -235,11 +241,11 @@ export default function Dashboard() {
               1 / (Reserve Ratio - 1)
             </p>
           </CardContent>
-        </Card>
+        </GlowCard>
       </div>
 
       {/* System Token Supply */}
-      <Card>
+      <GlowCard>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
@@ -257,7 +263,7 @@ export default function Dashboard() {
                 <ArrowUpRight className="h-4 w-4 text-green-500" />
               </div>
               <div className="text-2xl font-bold">
-                {formatNumber(stableCoinTotalSupply as bigint)}
+                {formatNumber(stablecoinTotalSupply as bigint)}
               </div>
               <div className="text-sm text-muted-foreground">
                 Total supply in circulation
@@ -291,10 +297,10 @@ export default function Dashboard() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </GlowCard>
 
       {/* System Actions */}
-      <Card>
+      <GlowCard>
         <CardHeader>
           <CardTitle>System Actions</CardTitle>
           <CardDescription>
@@ -321,11 +327,11 @@ export default function Dashboard() {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </GlowCard>
 
       {/* Protocol Health & Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
+        <GlowCard>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
@@ -353,9 +359,9 @@ export default function Dashboard() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </GlowCard>
 
-        <Card>
+        <GlowCard>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
@@ -381,7 +387,8 @@ export default function Dashboard() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </GlowCard>
+      </div>
       </div>
     </div>
   );

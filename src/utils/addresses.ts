@@ -1,7 +1,7 @@
 import { isAddress } from 'viem';
 
 // Chain-aware contract addresses
-export type ChainId = 1 | 137 | 56 | 8453 | 11155111 | 61;
+export type ChainId = 1 | 137 | 56 | 8453 | 11155111 | 61 | 2001;
 
 export interface ContractAddresses {
   djed: `0x${string}`;
@@ -78,6 +78,14 @@ export const CONTRACT_ADDRESSES: Record<ChainId, ContractAddresses> = {
     oracle: validateAddress("0x0000000000000000000000000000000000000000", "Oracle", 61, true),
     collateralAsset: validateAddress("0x0000000000000000000000000000000000000000", "CollateralAsset", 61, true),
   },
+  // Milkomeda (placeholder addresses - not yet deployed)
+  2001: {
+    djed: validateAddress("0x0000000000000000000000000000000000000000", "DJED", 2001, true),
+    stableCoin: validateAddress("0x0000000000000000000000000000000000000000", "StableCoin", 2001, true),
+    reserveCoin: validateAddress("0x0000000000000000000000000000000000000000", "ReserveCoin", 2001, true),
+    oracle: validateAddress("0x0000000000000000000000000000000000000000", "Oracle", 2001, true),
+    collateralAsset: validateAddress("0x0000000000000000000000000000000000000000", "CollateralAsset", 2001, true),
+  },
 };
 
 // Helper functions to get addresses by chain ID
@@ -112,6 +120,7 @@ export const StableCoinFactories = {
   8453: "0x0000000000000000000000000000000000000000", // Base - Update with actual address
   11155111: "0x0000000000000000000000000000000000000000", // Sepolia Testnet - Updated with deployed address
   61: "0x0000000000000000000000000000000000000000", // Ethereum Classic - Update with actual address
+  2001: "0x0000000000000000000000000000000000000000", // Milkomeda - Update with actual address
 } as {
   [key: number]: `0x${string}`;
 };

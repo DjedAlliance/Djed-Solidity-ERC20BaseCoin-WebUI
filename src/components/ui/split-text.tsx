@@ -17,7 +17,6 @@ export function SplitText({
   text,
   className,
   delay = 0,
-  duration = 0.6,
   stagger = 0.1,
   direction = 'up',
   children,
