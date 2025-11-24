@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount, useReadContract } from 'wagmi';
+import { useReadContract } from 'wagmi';
 import { formatUnits } from 'viem';
 import { 
   TrendingUp, 
@@ -28,8 +28,7 @@ import ORACLE_ABI from '@/utils/abi/IOracle.json';
 import { DJED_ADDRESS, STABLE_COIN_ADDRESS, RESERVE_COIN_ADDRESS, ORACLE_ADDRESS } from '@/utils/addresses';
 
 export default function Dashboard() {
-  const {  } = useAccount();
-  const [ , setRefreshKey] = useState(0);
+  const [, setRefreshKey] = useState(0);
 
   // Read protocol data
   const { data: ratio, refetch: refetchRatio } = useReadContract({
@@ -146,6 +145,18 @@ export default function Dashboard() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  const calculateLeverageRatio = (ratio: bigint | undefined) => {
+    if (!ratio) {
+      return '—';
+    }
+    const ratioPercent = parseFloat(formatUnits(ratio, 2));
+    const denominator = ratioPercent - 1;
+    if (denominator <= 0) {
+      return '—';
+    }
+    return (1 / denominator).toFixed(2);
+  };
+
   const getProtocolStatus = (ratio: bigint | undefined) => {
     if (!ratio) {
       return { label: 'Unknown', color: 'text-gray-500' };
@@ -235,7 +246,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {ratio ? (1 / (parseFloat(formatUnits(ratio as bigint, 2)) - 1)).toFixed(2) : '0'}
+              {calculateLeverageRatio(ratio as bigint)}
             </div>
             <p className="text-xs text-muted-foreground">
               1 / (Reserve Ratio - 1)
