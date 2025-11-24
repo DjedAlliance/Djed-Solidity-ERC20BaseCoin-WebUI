@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Wallet, CheckCircle, Zap } from "lucide-react"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { StableCoinFactoryABI } from "@/utils/abi/StableCoinFactory"
-import { StableCoinFactories } from "@/utils/addresses"
+import { StableCoinFactories, ZERO_ADDRESS } from "@/utils/addresses"
 import { toast } from "sonner"
 
 import { Toaster } from "@/components/ui/sonner"
@@ -96,8 +96,8 @@ export default function CreatePage() {
 
     const factoryAddress = StableCoinFactories[chainId as keyof typeof StableCoinFactories]
 
-    if (!factoryAddress) {
-      toast.error(`Chain ID ${chainId} is not supported. Please switch to Citrea Testnet, Rootstock Testnet, or Scroll Sepolia.`)
+    if (!factoryAddress || factoryAddress === ZERO_ADDRESS) {
+      toast.error("Unsupported network. Please switch to a supported network.")
       return
     }
 
