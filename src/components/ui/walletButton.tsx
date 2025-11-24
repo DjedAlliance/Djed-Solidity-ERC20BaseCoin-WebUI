@@ -2,33 +2,12 @@
 // @ts-nocheck
 'use client';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useState, useEffect } from 'react';
 import { Wallet, ChevronDown, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function WalletButton() {
-    const [ , setIsConnected] = useState(false);
-    const [ , setIsHovered] = useState(false);
-
-    // Check connection status (this would typically come from your wallet context)
-    useEffect(() => {
-        // This is a placeholder - in a real app, you'd check the actual connection status
-        // from your wallet provider context
-        const checkConnection = () => {
-            // Simulate checking connection status
-            // In reality, this would come from your wallet context
-            return false;
-        };
-        
-        setIsConnected(checkConnection());
-    }, []);
-
     return (
         <div className="flex justify-end items-center">
-            <div 
-                className="relative group"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-            >
+            <div className="relative group">
                 <ConnectButton.Custom>
                     {({
                         account,

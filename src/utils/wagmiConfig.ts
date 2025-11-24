@@ -38,7 +38,7 @@ export const config = (() => {
       [ethereumClassic.id]: http(),
       [sepolia.id]: http(),
     },
-    ssr: true, // Disable SSR to prevent wallet disconnection issues
+    ssr: false, // Disable SSR to prevent wallet disconnection issues
     // Add connection persistence
     // enableAnalytics: false, // Disable analytics to prevent connection issues
   });
