@@ -316,9 +316,9 @@ export default function Home() {
                       Launch App
                       <ArrowRight className="w-5 h-5" />
                     </MagneticButton>
-                    <button className="px-8 py-4 rounded-xl border border-white/30 hover:bg-white/10 transition-all duration-300 text-lg font-semibold backdrop-blur-sm">
+                    <Link href="/docs" className="px-8 py-4 rounded-xl border border-white/30 hover:bg-white/10 transition-all duration-300 text-lg font-semibold backdrop-blur-sm">
                       View Documentation
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </FloatingElement>

@@ -169,7 +169,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-- **Documentation**: [Link to docs]
+- **Documentation**: [/src/app/docs/page.tsx](src/app/docs/page.tsx) — local docs route at `/docs`
 - **Discord**: [Discord invite]
 - **Twitter**: [@DjedProtocol]
 - **Issues**: [GitHub Issues](https://github.com/your-username/djed-webui/issues)
