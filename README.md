@@ -163,6 +163,101 @@ We welcome contributions! Please follow these steps:
 - Update documentation as needed
 - Ensure all tests pass before submitting PR
 
+## Resources
+
+### Documentation
+
+- **Protocol Documentation**: Comprehensive guide to the Djed protocol mechanics, architecture, and design principles
+- **API Reference**: Complete API documentation for all smart contract functions and interfaces
+- **Web UI Guide**: User manual for the web interface, including wallet connection, trading, and portfolio management
+- **Smart Contract Documentation**: Detailed documentation for all deployed contracts, including ABIs and deployment addresses
+
+### Smart Contracts
+
+- **Contract Addresses**: 
+  - Base Chain: [View on BaseScan](https://basescan.org/)
+  - Ethereum: [View on Etherscan](https://etherscan.io/)
+  - BNB Smart Chain: [View on BscScan](https://bscscan.com/)
+  - Milkomeda: [View on Milkomeda Explorer](https://explorer-mainnet-cardano-evm.c1.milkomeda.com/)
+  - Ethereum Classic: [View on Blockscout](https://blockscout.com/etc/mainnet/)
+
+- **ABI Files**: Located in `src/utils/abi/`
+  - `Djed.json`: Main protocol contract ABI
+  - `Coin.json`: ERC20 token contract ABI
+  - `IOracle.json`: Oracle interface ABI
+  - `StableCoinFactory.ts`: Factory contract types
+
+### Development Resources
+
+- **Next.js Documentation**: [https://nextjs.org/docs](https://nextjs.org/docs)
+- **React Documentation**: [https://react.dev](https://react.dev)
+- **TypeScript Handbook**: [https://www.typescriptlang.org/docs/](https://www.typescriptlang.org/docs/)
+- **Wagmi Documentation**: [https://wagmi.sh](https://wagmi.sh) - React Hooks for Ethereum
+- **Viem Documentation**: [https://viem.sh](https://viem.sh) - TypeScript Ethereum library
+- **RainbowKit Documentation**: [https://www.rainbowkit.com](https://www.rainbowkit.com) - Wallet connection UI
+- **Tailwind CSS**: [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+- **Framer Motion**: [https://www.framer.com/motion/](https://www.framer.com/motion/) - Animation library
+
+### Blockchain & Web3 Resources
+
+- **Ethereum Foundation**: [https://ethereum.org](https://ethereum.org)
+- **Solidity Documentation**: [https://docs.soliditylang.org](https://docs.soliditylang.org)
+- **OpenZeppelin Contracts**: [https://docs.openzeppelin.com/contracts](https://docs.openzeppelin.com/contracts) - Secure smart contract library
+- **Ethers.js Documentation**: [https://docs.ethers.org](https://docs.ethers.org) - Alternative Ethereum library
+- **Web3.js Documentation**: [https://web3js.readthedocs.io](https://web3js.readthedocs.io)
+
+### Testing & Security
+
+- **Hardhat**: [https://hardhat.org/docs](https://hardhat.org/docs) - Ethereum development environment
+- **Foundry**: [https://book.getfoundry.sh](https://book.getfoundry.sh) - Fast, portable, and modular toolkit
+- **Slither**: [https://github.com/crytic/slither](https://github.com/crytic/slither) - Static analysis framework
+- **Mythril**: [https://github.com/ConsenSys/mythril](https://github.com/ConsenSys/mythril) - Security analysis tool
+
+### Community & Support
+
+- **GitHub Repository**: [View Source Code](https://github.com/your-username/djed-webui)
+- **Issue Tracker**: [Report Bugs or Request Features](https://github.com/your-username/djed-webui/issues)
+- **Discussions**: [Community Discussions](https://github.com/your-username/djed-webui/discussions)
+- **Discord Community**: Join our Discord server for real-time support and discussions
+- **Twitter**: Follow [@DjedProtocol](https://twitter.com/DjedProtocol) for updates and announcements
+
+### Tutorials & Guides
+
+- **Getting Started with Djed**: Step-by-step guide for first-time users
+- **Trading Guide**: How to buy and sell StableCoins and ReserveCoins
+- **Developer Onboarding**: Guide for developers wanting to contribute
+- **Smart Contract Integration**: Tutorial on integrating Djed contracts into your dApp
+- **Deployment Guide**: Instructions for deploying the protocol to new networks
+
+### Research & Whitepapers
+
+- **Djed Protocol Whitepaper**: Original research paper on algorithmic stablecoins
+- **Academic Papers**: Research papers on stablecoin mechanisms and reserve management
+- **Economic Model**: Detailed explanation of the protocol's economic incentives
+
+### Tools & Utilities
+
+- **Block Explorers**: 
+  - [BaseScan](https://basescan.org/) - Base chain explorer
+  - [Etherscan](https://etherscan.io/) - Ethereum explorer
+  - [BscScan](https://bscscan.com/) - BNB Smart Chain explorer
+  
+- **Price Oracles**: 
+  - [Chainlink](https://chain.link/) - Decentralized oracle network
+  - [Price Feeds Documentation](https://docs.chain.link/data-feeds)
+
+- **Wallet Providers**:
+  - [MetaMask](https://metamask.io/) - Browser extension wallet
+  - [WalletConnect](https://walletconnect.com/) - Open protocol for connecting wallets
+  - [RainbowKit](https://www.rainbowkit.com/) - Wallet connection UI components
+
+### Additional Reading
+
+- **Stablecoin Mechanisms**: Understanding different approaches to price stability
+- **DeFi Protocols**: Overview of decentralized finance and algorithmic protocols
+- **Reserve Management**: Best practices for managing protocol reserves
+- **Oracle Security**: Security considerations for price oracle integration
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
