@@ -417,7 +417,7 @@ function TradePage() {
 
         try {
           await writeContractAsync({
-            address: STABLE_COIN_ADDRESS as `0x${string}`,
+            address: baseCoinAddress as `0x${string}`,
             abi: COIN_ABI,
             functionName: "approve",
             args: [contractAddress, amountBN],
@@ -472,7 +472,7 @@ function TradePage() {
 
         try {
           await writeContractAsync({
-            address: STABLE_COIN_ADDRESS as `0x${string}`,
+            address: RESERVE_COIN_ADDRESS as `0x${string}`,
             abi: COIN_ABI,
             functionName: "approve",
             args: [contractAddress, amountBN],
@@ -489,59 +489,59 @@ function TradePage() {
     }
 
     if (
-      tradeType === "sell-both" &&
-      STABLE_COIN_ADDRESS &&
-      RESERVE_COIN_ADDRESS
-    ) {
-      const amountBN = parseUnits(amount, 18);
-      const amountRCBN = amountRC ? parseUnits(amountRC, 18) : 0n;
-      const stableAllowance = (stableCoinAllowance as bigint) ?? 0n;
-      const reserveAllowance = (reserveCoinAllowance as bigint) ?? 0n;
+  tradeType === "sell-both" &&
+  STABLE_COIN_ADDRESS &&
+  RESERVE_COIN_ADDRESS
+) {
+  const amountBN = parseUnits(amount, 18);
+  const amountRCBN = amountRC ? parseUnits(amountRC, 18) : 0n;
+  const stableAllowance = (stableCoinAllowance as bigint) ?? 0n;
+  const reserveAllowance = (reserveCoinAllowance as bigint) ?? 0n;
 
-      // Check Stablecoin approval
-      if (stableAllowance < amountBN) {
-        setTradeState("approving");
-        setTxKind("approval");
+  // ✅ 1️⃣ StableCoin approval
+  if (stableAllowance < amountBN) {
+    setTradeState("approving");
+    setTxKind("approval");
 
-        try {
-          await writeContractAsync({
-            address: STABLE_COIN_ADDRESS as `0x${string}`,
-            abi: COIN_ABI,
-            functionName: "approve",
-            args: [contractAddress, amountBN],
-            gas: BigInt(100000),
-          });
-        } catch (err) {
-          console.error("Approval failed:", err);
-          setTxKind(null);
-          setTradeState("error");
-        }
-
-        return; // Wait for user to click again
-      }
-
-      // Check Leveraged Yield Coin approval
-      if (reserveAllowance < amountRCBN) {
-        setTradeState("approving");
-        setTxKind("approval");
-
-        try {
-          await writeContractAsync({
-            address: STABLE_COIN_ADDRESS as `0x${string}`,
-            abi: COIN_ABI,
-            functionName: "approve",
-            args: [contractAddress, amountBN],
-            gas: BigInt(100000),
-          });
-        } catch (err) {
-          console.error("Approval failed:", err);
-          setTxKind(null);
-          setTradeState("error");
-        }
-
-        return; // Wait for user to click again
-      }
+    try {
+      await writeContractAsync({
+        address: STABLE_COIN_ADDRESS as `0x${string}`,
+        abi: COIN_ABI,
+        functionName: "approve",
+        args: [contractAddress, amountBN], // ✅ correct
+        gas: BigInt(100000),
+      });
+    } catch (err) {
+      console.error("Approval failed:", err);
+      setTxKind(null);
+      setTradeState("error");
     }
+
+    return;
+  }
+
+  // ✅ 2️⃣ ReserveCoin approval
+  if (reserveAllowance < amountRCBN) {
+    setTradeState("approving");
+    setTxKind("approval");
+
+    try {
+      await writeContractAsync({
+        address: RESERVE_COIN_ADDRESS as `0x${string}`, // ✅ correct token
+        abi: COIN_ABI,
+        functionName: "approve",
+        args: [contractAddress, amountRCBN], // ✅ correct
+        gas: BigInt(100000),
+      });
+    } catch (err) {
+      console.error("Approval failed:", err);
+      setTxKind(null);
+      setTradeState("error");
+    }
+
+    return;
+  }
+}
 
     // For operations that don't need approval or when approval is not needed, execute trade directly
     await executeTrade();
@@ -783,7 +783,13 @@ function TradePage() {
   ]);
 
   useEffect(() => {
-    if (tradeState === "executing" || tradeState === "confirming") return;
+    if (
+      tradeState === "executing" ||
+      tradeState === "confirming" ||
+      tradeState === "approving"
+    ) {
+      return;
+    }
 
     if (!amount) {
       setTradeState("idle");
@@ -1055,9 +1061,11 @@ function TradePage() {
                     <Button
                       variant="link"
                       size="sm"
-                      onClick={() =>
-                        setAmountRC(formatNumber(reserveCoinBalance as bigint))
-                      }
+                      onClick={() => {
+                        if (!reserveCoinBalance) return;
+                        const formatted = formatUnits(reserveCoinBalance, 18);
+                        setAmountRC(formatted);
+                      }}
                     >
                       Max
                     </Button>
