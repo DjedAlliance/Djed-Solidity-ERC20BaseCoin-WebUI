@@ -10,7 +10,7 @@ import {
   useWaitForTransactionReceipt,
   useReadContract,
 } from "wagmi";
-import { parseUnits, formatUnits } from "viem";
+import { parseUnits, formatUnits, isAddress, getAddress } from "viem";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -59,7 +59,19 @@ type TradeType =
 
 function TradePage() {
   const searchParams = useSearchParams();
-  const contractAddress = searchParams.get("address") || DJED_ADDRESS;
+  const requestedAddress = searchParams.get("address");
+
+  const normalizedRequested =
+    requestedAddress && isAddress(requestedAddress)
+      ? getAddress(requestedAddress)
+      : null;
+
+  const allowedDjedContracts = new Set([getAddress(DJED_ADDRESS)]);
+
+  const contractAddress =
+    normalizedRequested && allowedDjedContracts.has(normalizedRequested)
+      ? normalizedRequested
+      : DJED_ADDRESS;
   const { address, isConnected } = useAccount();
   const [tradeType, setTradeType] = useState<TradeType>("buy-stable");
   const [amount, setAmount] = useState("");
@@ -83,9 +95,17 @@ function TradePage() {
 
   const [tradeState, setTradeState] = useState<TradeState>("idle");
 
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const {
+    writeContractAsync,
+    data: hash,
+    isPending,
+    error,
+  } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
+
+  type TxKind = "approval" | "trade" | null;
+  const [txKind, setTxKind] = useState<TxKind>(null);
 
   useEffect(() => {
     if (isPending) {
@@ -95,12 +115,16 @@ function TradePage() {
       setTradeState("confirming");
     }
     if (isConfirmed) {
-      setTradeState("success");
+      if (txKind === "trade") {
+        setTradeState("success");
+      } else if (txKind === "approval") {
+        setTradeState("idle");
+      }
     }
     if (error) {
       setTradeState("error");
     }
-  }, [isPending, isConfirming, isConfirmed, error]);
+  }, [isPending, isConfirming, isConfirmed, error, txKind]);
 
   // Separate state for approval transaction
 
@@ -294,10 +318,10 @@ function TradePage() {
         uiAddress,
         baseCoinAddress,
       });
-
+      setTxKind("trade");
       switch (tradeType) {
         case "buy-stable":
-          writeContract({
+          await writeContractAsync({
             address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
             functionName: "buyStablecoins",
@@ -306,7 +330,7 @@ function TradePage() {
           });
           break;
         case "sell-stable":
-          writeContract({
+          await writeContractAsync({
             address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
             functionName: "sellStablecoins",
@@ -314,7 +338,7 @@ function TradePage() {
           });
           break;
         case "buy-reserve":
-          writeContract({
+          await writeContractAsync({
             address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
             functionName: "buyReserveCoins",
@@ -323,7 +347,7 @@ function TradePage() {
           });
           break;
         case "sell-reserve":
-          writeContract({
+          await writeContractAsync({
             address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
             functionName: "sellReserveCoins",
@@ -331,7 +355,7 @@ function TradePage() {
           });
           break;
         case "sell-both":
-          writeContract({
+          await writeContractAsync({
             address: contractAddress as `0x${string}`,
             abi: DJED_ABI,
             functionName: "sellBothCoins",
@@ -351,7 +375,7 @@ function TradePage() {
     feeUI,
     ui,
     baseCoinAddress,
-    writeContract,
+    writeContractAsync,
     contractAddress,
   ]);
 
@@ -387,8 +411,8 @@ function TradePage() {
       if (currentAllowance < amountBN) {
         // First approve the Djed contract to spend BaseCoins
         setTradeState("approving");
-
-        await writeContract({
+        setTxKind("approval");
+        await writeContractAsync({
           address: baseCoinAddress as `0x${string}`,
           abi: COIN_ABI,
           functionName: "approve",
@@ -408,8 +432,8 @@ function TradePage() {
       if (currentAllowance < amountBN) {
         // First approve the Djed contract to spend Stablecoins
         setTradeState("approving");
-
-        await writeContract({
+        setTxKind("approval");
+        await writeContractAsync({
           address: STABLE_COIN_ADDRESS as `0x${string}`,
           abi: COIN_ABI,
           functionName: "approve",
@@ -427,8 +451,8 @@ function TradePage() {
       if (currentAllowance < amountBN) {
         // First approve the Djed contract to spend Leveraged Yield Coins
         setTradeState("approving");
-
-        await writeContract({
+        setTxKind("approval");
+        await writeContractAsync({
           address: RESERVE_COIN_ADDRESS as `0x${string}`,
           abi: COIN_ABI,
           functionName: "approve",
@@ -453,8 +477,8 @@ function TradePage() {
       // Check Stablecoin approval
       if (stableAllowance < amountBN) {
         setTradeState("approving");
-
-        await writeContract({
+        setTxKind("approval");
+        await writeContractAsync({
           address: STABLE_COIN_ADDRESS as `0x${string}`,
           abi: COIN_ABI,
           functionName: "approve",
@@ -468,8 +492,8 @@ function TradePage() {
       // Check Leveraged Yield Coin approval
       if (reserveAllowance < amountRCBN) {
         setTradeState("approving");
-
-        await writeContract({
+        setTxKind("approval");
+        await writeContractAsync({
           address: RESERVE_COIN_ADDRESS as `0x${string}`,
           abi: COIN_ABI,
           functionName: "approve",
@@ -625,13 +649,13 @@ function TradePage() {
       const amountBN = parseUnits(amount, 18);
 
       // Validate SC / BC balance
-      const balance = getBalance() as bigint;
-      if (balance && amountBN > balance) {
+      const balance = getBalance() as bigint | undefined;
+      if (balance !== undefined && amountBN > balance) {
         return "Insufficient balance";
       }
 
       // Validate tx limit
-      if (txLimit && amountBN > (txLimit as bigint)) {
+      if (txLimit !== undefined && amountBN > (txLimit as bigint)) {
         return "Amount exceeds transaction limit";
       }
 
@@ -643,11 +667,14 @@ function TradePage() {
 
         const amountRCBN = parseUnits(amountRC, 18);
 
-        if (reserveCoinBalance && amountRCBN > (reserveCoinBalance as bigint)) {
+        if (
+          reserveCoinBalance !== undefined &&
+          amountRCBN > (reserveCoinBalance as bigint)
+        ) {
           return "Insufficient reserve coin balance";
         }
 
-        if (txLimit && amountRCBN > (txLimit as bigint)) {
+        if (txLimit !== undefined && amountRCBN > (txLimit as bigint)) {
           return "Reserve amount exceeds transaction limit";
         }
       }
@@ -870,7 +897,7 @@ function TradePage() {
                         needed
                       </span>
                     </div>
-                    {baseCoinAllowance &&
+                    {baseCoinAllowance !== undefined &&
                       amount &&
                       baseCoinAllowance < parseUnits(amount, 18) && (
                         <div className="mt-2 text-xs text-orange-500">
@@ -894,7 +921,7 @@ function TradePage() {
                       needed
                     </span>
                   </div>
-                  {stableCoinAllowance &&
+                  {stableCoinAllowance !== undefined &&
                     amount &&
                     stableCoinAllowance < parseUnits(amount, 18) && (
                       <div className="mt-2 text-xs text-orange-500">
@@ -917,7 +944,7 @@ function TradePage() {
                       needed
                     </span>
                   </div>
-                  {reserveCoinAllowance &&
+                  {reserveCoinAllowance !== undefined &&
                     amount &&
                     reserveCoinAllowance < parseUnits(amount, 18) && (
                       <div className="mt-2 text-xs text-orange-500">
@@ -952,10 +979,10 @@ function TradePage() {
                         needed
                       </span>
                     </div>
-                    {((stableCoinAllowance &&
+                    {((stableCoinAllowance !== undefined &&
                       amount &&
                       stableCoinAllowance < parseUnits(amount, 18)) ||
-                      (reserveCoinAllowance &&
+                      (reserveCoinAllowance !== undefined &&
                         amountRC &&
                         reserveCoinAllowance < parseUnits(amountRC, 18))) && (
                       <div className="mt-2 text-xs text-orange-500">
@@ -1099,6 +1126,13 @@ function TradePage() {
                   <>
                     <DollarSign className="mr-2 h-4 w-4" />
                     Approve
+                  </>
+                )}
+
+                {tradeState === "error" && (
+                  <>
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    Retry Trade
                   </>
                 )}
 
