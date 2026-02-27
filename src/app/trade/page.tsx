@@ -365,6 +365,8 @@ function TradePage() {
       }
     } catch (err) {
       console.error("Error executing trade:", err);
+      setTxKind(null);
+      setTradeState("error");
     }
   }, [
     amount,
@@ -412,13 +414,20 @@ function TradePage() {
         // First approve the Djed contract to spend BaseCoins
         setTradeState("approving");
         setTxKind("approval");
-        await writeContractAsync({
-          address: baseCoinAddress as `0x${string}`,
-          abi: COIN_ABI,
-          functionName: "approve",
-          args: [contractAddress, amountBN],
-          gas: BigInt(100000),
-        });
+
+        try {
+          await writeContractAsync({
+            address: STABLE_COIN_ADDRESS as `0x${string}`,
+            abi: COIN_ABI,
+            functionName: "approve",
+            args: [contractAddress, amountBN],
+            gas: BigInt(100000),
+          });
+        } catch (err) {
+          console.error("Approval failed:", err);
+          setTxKind(null);
+          setTradeState("error");
+        }
 
         return; // Wait for user to click again // Exit here, the actual trade will be triggered after approval
       }
@@ -433,13 +442,21 @@ function TradePage() {
         // First approve the Djed contract to spend Stablecoins
         setTradeState("approving");
         setTxKind("approval");
-        await writeContractAsync({
-          address: STABLE_COIN_ADDRESS as `0x${string}`,
-          abi: COIN_ABI,
-          functionName: "approve",
-          args: [contractAddress, amountBN],
-          gas: BigInt(100000),
-        });
+
+        try {
+          await writeContractAsync({
+            address: STABLE_COIN_ADDRESS as `0x${string}`,
+            abi: COIN_ABI,
+            functionName: "approve",
+            args: [contractAddress, amountBN],
+            gas: BigInt(100000),
+          });
+        } catch (err) {
+          console.error("Approval failed:", err);
+          setTxKind(null);
+          setTradeState("error");
+        }
+
         return;
       }
     }
@@ -452,13 +469,20 @@ function TradePage() {
         // First approve the Djed contract to spend Leveraged Yield Coins
         setTradeState("approving");
         setTxKind("approval");
-        await writeContractAsync({
-          address: RESERVE_COIN_ADDRESS as `0x${string}`,
-          abi: COIN_ABI,
-          functionName: "approve",
-          args: [contractAddress, amountBN],
-          gas: BigInt(100000),
-        });
+
+        try {
+          await writeContractAsync({
+            address: STABLE_COIN_ADDRESS as `0x${string}`,
+            abi: COIN_ABI,
+            functionName: "approve",
+            args: [contractAddress, amountBN],
+            gas: BigInt(100000),
+          });
+        } catch (err) {
+          console.error("Approval failed:", err);
+          setTxKind(null);
+          setTradeState("error");
+        }
 
         return; // Wait for user to click again // Exit here, the actual trade will be triggered after approval
       }
@@ -478,13 +502,20 @@ function TradePage() {
       if (stableAllowance < amountBN) {
         setTradeState("approving");
         setTxKind("approval");
-        await writeContractAsync({
-          address: STABLE_COIN_ADDRESS as `0x${string}`,
-          abi: COIN_ABI,
-          functionName: "approve",
-          args: [contractAddress, amountBN],
-          gas: BigInt(100000),
-        });
+
+        try {
+          await writeContractAsync({
+            address: STABLE_COIN_ADDRESS as `0x${string}`,
+            abi: COIN_ABI,
+            functionName: "approve",
+            args: [contractAddress, amountBN],
+            gas: BigInt(100000),
+          });
+        } catch (err) {
+          console.error("Approval failed:", err);
+          setTxKind(null);
+          setTradeState("error");
+        }
 
         return; // Wait for user to click again
       }
@@ -493,13 +524,20 @@ function TradePage() {
       if (reserveAllowance < amountRCBN) {
         setTradeState("approving");
         setTxKind("approval");
-        await writeContractAsync({
-          address: RESERVE_COIN_ADDRESS as `0x${string}`,
-          abi: COIN_ABI,
-          functionName: "approve",
-          args: [contractAddress, amountRCBN],
-          gas: BigInt(100000),
-        });
+
+        try {
+          await writeContractAsync({
+            address: STABLE_COIN_ADDRESS as `0x${string}`,
+            abi: COIN_ABI,
+            functionName: "approve",
+            args: [contractAddress, amountBN],
+            gas: BigInt(100000),
+          });
+        } catch (err) {
+          console.error("Approval failed:", err);
+          setTxKind(null);
+          setTradeState("error");
+        }
 
         return; // Wait for user to click again
       }
@@ -874,9 +912,12 @@ function TradePage() {
                   <Button
                     variant="link"
                     size="sm"
-                    onClick={() =>
-                      setAmount(formatNumber(getBalance() as bigint))
-                    }
+                    onClick={() => {
+                      const balance = getBalance() as bigint | undefined;
+                      if (!balance) return;
+                      const formatted = formatUnits(balance, 18);
+                      setAmount(formatted);
+                    }}
                   >
                     Max
                   </Button>
@@ -1163,7 +1204,7 @@ function TradePage() {
                 </Alert>
               )}
 
-              {isConfirmed && (
+              {isConfirmed && txKind === "trade" && (
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
