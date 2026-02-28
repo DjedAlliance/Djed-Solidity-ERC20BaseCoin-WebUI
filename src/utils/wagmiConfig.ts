@@ -17,36 +17,45 @@ export const config = (() => {
     chains: [mainnet, polygon, bsc, base, ethereumClassic, sepolia],
 
     transports: {
-      [mainnet.id]: fallback([
-        http(process.env.NEXT_PUBLIC_ETH_RPC),
-        http("https://rpc.ankr.com/eth"),
-        http("https://cloudflare-eth.com"),
-      ]),
+      [mainnet.id]: fallback(
+        [
+          process.env.NEXT_PUBLIC_ETH_RPC,
+          "https://rpc.ankr.com/eth",
+          "https://cloudflare-eth.com",
+        ]
+          .filter(Boolean)
+          .map((url) => http(url as string)),
+      ),
 
-      [polygon.id]: fallback([
-        http(process.env.NEXT_PUBLIC_POLYGON_RPC),
-        http("https://polygon-rpc.com"),
-      ]),
+      [polygon.id]: fallback(
+        [process.env.NEXT_PUBLIC_POLYGON_RPC, "https://polygon-rpc.com"]
+          .filter(Boolean)
+          .map((url) => http(url as string)),
+      ),
 
-      [bsc.id]: fallback([
-        http(process.env.NEXT_PUBLIC_BSC_RPC),
-        http("https://bsc-dataseed.binance.org"),
-      ]),
+      [bsc.id]: fallback(
+        [process.env.NEXT_PUBLIC_BSC_RPC, "https://bsc-dataseed.binance.org"]
+          .filter(Boolean)
+          .map((url) => http(url as string)),
+      ),
 
-      [base.id]: fallback([
-        http(process.env.NEXT_PUBLIC_BASE_RPC),
-        http("https://mainnet.base.org"),
-      ]),
+      [base.id]: fallback(
+        [process.env.NEXT_PUBLIC_BASE_RPC, "https://mainnet.base.org"]
+          .filter(Boolean)
+          .map((url) => http(url as string)),
+      ),
 
-      [ethereumClassic.id]: fallback([
-        http(process.env.NEXT_PUBLIC_ETC_RPC),
-        http("https://etc.rivet.link"),
-      ]),
+      [ethereumClassic.id]: fallback(
+        [process.env.NEXT_PUBLIC_ETC_RPC, "https://etc.rivet.link"]
+          .filter(Boolean)
+          .map((url) => http(url as string)),
+      ),
 
-      [sepolia.id]: fallback([
-        http(process.env.NEXT_PUBLIC_SEPOLIA_RPC),
-        http("https://rpc.sepolia.org"),
-      ]),
+      [sepolia.id]: fallback(
+        [process.env.NEXT_PUBLIC_SEPOLIA_RPC, "https://rpc.sepolia.org"]
+          .filter(Boolean)
+          .map((url) => http(url as string)),
+      ),
     },
 
     ssr: false,
