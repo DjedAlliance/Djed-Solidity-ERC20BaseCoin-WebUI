@@ -1,12 +1,10 @@
-'use client';
-
-import { useState } from 'react';
-import { useReadContract } from 'wagmi';
-import { formatUnits } from 'viem';
-import { 
-  TrendingUp, 
-  DollarSign, 
-  Shield, 
+"use client";
+import { useReadContract } from "wagmi";
+import { formatUnits } from "viem";
+import {
+  TrendingUp,
+  DollarSign,
+  Shield,
   Activity,
   BarChart3,
   Wallet,
@@ -20,96 +18,162 @@ import {
   CardHeader,
   CardTitle,
   Button,
-  GlowCard
-} from '@/components/ui';
-import DJED_ABI from '@/utils/abi/Djed.json';
-import COIN_ABI from '@/utils/abi/Coin.json';
-import ORACLE_ABI from '@/utils/abi/IOracle.json';
-import { DJED_ADDRESS, STABLE_COIN_ADDRESS, RESERVE_COIN_ADDRESS, ORACLE_ADDRESS } from '@/utils/addresses';
+  GlowCard,
+} from "@/components/ui";
+import DJED_ABI from "@/utils/abi/Djed.json";
+import COIN_ABI from "@/utils/abi/Coin.json";
+import ORACLE_ABI from "@/utils/abi/IOracle.json";
+import { useChainId, useFeeData, useChains } from "wagmi";
+import { getContractAddresses, isDeployedAddress } from "@/utils/addresses";
+import UnsupportedNetwork from "@/components/UnsupportedNetwork";
+import { useEffect, useCallback, useMemo } from "react";
 
 export default function Dashboard() {
-  const [, setRefreshKey] = useState(0);
+  const chainId = useChainId();
+  const chains = useChains();
+  const chain = chains.find((c) => c.id === chainId);
+  const { data: feeData } = useFeeData();
+  const contracts = useMemo(() => {
+    try {
+      return getContractAddresses(chainId);
+    } catch {
+      return null;
+    }
+  }, [chainId]);
+
+  const djed = contracts?.djed;
+  const stableCoin = contracts?.stableCoin;
+  const reserveCoin = contracts?.reserveCoin;
+  const oracle = contracts?.oracle;
 
   // Read protocol data
   const { data: ratio, refetch: refetchRatio } = useReadContract({
-    address: DJED_ADDRESS,
+    address: djed as `0x${string}` | undefined,
+    chainId,
     abi: DJED_ABI,
-    functionName: 'ratio',
+    functionName: "ratio",
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
   });
 
-  const { data: reserveAmount, refetch: refetchReserveAmount } = useReadContract({
-    address: DJED_ADDRESS,
-    abi: DJED_ABI,
-    functionName: 'R',
-    args: [0n],
-  });
+  const { data: reserveAmount, refetch: refetchReserveAmount } =
+    useReadContract({
+      address: djed as `0x${string}` | undefined,
+      chainId,
+      query: {
+        enabled: isDeployedAddress(djed),
+      },
+      abi: DJED_ABI,
+      functionName: "R",
+      args: [0n],
+    });
 
   const { refetch: refetchLiabilities } = useReadContract({
-    address: DJED_ADDRESS,
+    address: djed as `0x${string}` | undefined,
+    chainId,
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: 'L',
   });
 
   const { data: scPrice, refetch: refetchScPrice } = useReadContract({
-    address: DJED_ADDRESS,
+    address: djed as `0x${string}` | undefined,
+    chainId,
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: 'scPrice',
     args: [0n],
   });
 
-  const { data: rcTargetPrice, refetch: refetchRcTargetPrice } = useReadContract({
-    address: DJED_ADDRESS,
-    abi: DJED_ABI,
-    functionName: 'rcTargetPrice',
-    args: [0n],
-  });
+  const { data: rcTargetPrice, refetch: refetchRcTargetPrice } =
+    useReadContract({
+      address: djed as `0x${string}` | undefined,
+      chainId,
+      query: {
+        enabled: isDeployedAddress(djed),
+      },
+      abi: DJED_ABI,
+      functionName: "rcTargetPrice",
+      args: [0n],
+    });
 
   const { data: oraclePrice, refetch: refetchOraclePrice } = useReadContract({
     address: ORACLE_ADDRESS,
     abi: ORACLE_ABI,
-    functionName: 'readData',
+    functionName: "readData",
+    query: {
+      enabled: isDeployedAddress(oracle),
+    },
   });
 
   const { data: fee, refetch: refetchFee } = useReadContract({
-    address: DJED_ADDRESS,
+    address: djed as `0x${string}` | undefined,
+    chainId,
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: 'fee',
   });
 
   const { data: treasuryFee, refetch: refetchTreasuryFee } = useReadContract({
-    address: DJED_ADDRESS,
+    address: djed as `0x${string}` | undefined,
+    chainId,
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: 'treasuryFee',
   });
 
   const { data: txLimit, refetch: refetchTxLimit } = useReadContract({
-    address: DJED_ADDRESS,
+    address: djed as `0x${string}` | undefined,
+    chainId,
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: 'txLimit',
   });
 
   // Read system-wide token supplies
-  const { data: stablecoinTotalSupply, refetch: refetchStablecoinTotalSupply } = useReadContract({
-    address: STABLE_COIN_ADDRESS,
-    abi: COIN_ABI,
-    functionName: 'totalSupply',
-  });
+  const { data: stablecoinTotalSupply, refetch: refetchStablecoinTotalSupply } =
+    useReadContract({
+      address: stableCoin as `0x${string}` | undefined,
+      chainId,
+      abi: COIN_ABI,
+      functionName: "totalSupply",
+      query: {
+        enabled: isDeployedAddress(stableCoin),
+      },
+    });
 
   const { data: reserveCoinTotalSupply, refetch: refetchReserveCoinTotalSupply } = useReadContract({
     address: RESERVE_COIN_ADDRESS,
     abi: COIN_ABI,
-    functionName: 'totalSupply',
+    functionName: "totalSupply",
+    query: {
+      enabled: isDeployedAddress(reserveCoin),
+    },
   });
 
-  const { data: baseCoinAddress, refetch: refetchBaseCoinAddress } = useReadContract({
-    address: DJED_ADDRESS,
-    abi: DJED_ABI,
-    functionName: 'baseCoin',
-  });
+  const { data: baseCoinAddress, refetch: refetchBaseCoinAddress } =
+    useReadContract({
+      address: djed as `0x${string}` | undefined,
+      chainId,
+      query: {
+        enabled: isDeployedAddress(djed),
+      },
+      abi: DJED_ABI,
+      functionName: "baseCoin",
+    });
 
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-    // Refetch all contract data
+  const handleRefresh = useCallback(() => {
     refetchRatio();
     refetchReserveAmount();
     refetchLiabilities();
@@ -122,7 +186,23 @@ export default function Dashboard() {
     refetchStablecoinTotalSupply();
     refetchReserveCoinTotalSupply();
     refetchBaseCoinAddress();
-  };
+  }, [
+    refetchRatio,
+    refetchReserveAmount,
+    refetchLiabilities,
+    refetchScPrice,
+    refetchRcTargetPrice,
+    refetchOraclePrice,
+    refetchFee,
+    refetchTreasuryFee,
+    refetchTxLimit,
+    refetchStablecoinTotalSupply,
+    refetchReserveCoinTotalSupply,
+    refetchBaseCoinAddress,
+  ]);
+  useEffect(() => {
+    handleRefresh();
+  }, [chainId, handleRefresh]);
 
   const formatNumber = (value: bigint | undefined, decimals: number = 18) => {
     if (!value) return '0';
@@ -173,6 +253,7 @@ export default function Dashboard() {
       return { label: 'At Risk', color: 'text-red-500' };
     }
   };
+  const protocolStatus = getProtocolStatus(ratio as bigint | undefined);
 
   return (
     <div className="relative min-h-screen overflow-hidden">
