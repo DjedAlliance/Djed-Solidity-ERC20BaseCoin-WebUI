@@ -23,19 +23,21 @@ import {
 import DJED_ABI from "@/utils/abi/Djed.json";
 import COIN_ABI from "@/utils/abi/Coin.json";
 import ORACLE_ABI from "@/utils/abi/IOracle.json";
-import { useChainId, useFeeData, useChains } from "wagmi";
-import { getContractAddresses, isDeployedAddress } from "@/utils/addresses";
-import UnsupportedNetwork from "@/components/UnsupportedNetwork";
+import { useChainId , } from "wagmi";
+import {
+  getContractAddresses,
+  isDeployedAddress,
+  ORACLE_ADDRESS,
+  RESERVE_COIN_ADDRESS,
+  type ChainId,
+} from "@/utils/addresses";
 import { useEffect, useCallback, useMemo } from "react";
 
 export default function Dashboard() {
   const chainId = useChainId();
-  const chains = useChains();
-  const chain = chains.find((c) => c.id === chainId);
-  const { data: feeData } = useFeeData();
   const contracts = useMemo(() => {
     try {
-      return getContractAddresses(chainId);
+      return getContractAddresses(chainId as ChainId);
     } catch {
       return null;
     }
@@ -253,7 +255,6 @@ export default function Dashboard() {
       return { label: 'At Risk', color: 'text-red-500' };
     }
   };
-  const protocolStatus = getProtocolStatus(ratio as bigint | undefined);
 
   return (
     <div className="relative min-h-screen overflow-hidden">

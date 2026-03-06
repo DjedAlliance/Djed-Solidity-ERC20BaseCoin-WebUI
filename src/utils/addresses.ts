@@ -2,6 +2,11 @@ import { isAddress } from 'viem';
 
 // A commonly used constant for the zero address
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const isDeployedAddress = (address?: string | null): address is `0x${string}` => {
+  if (!address) return false;
+  if (!isAddress(address)) return false;
+  return address !== ZERO_ADDRESS;
+};
 
 // Chain-aware contract addresses
 export type ChainId = 1 | 137 | 56 | 8453 | 11155111 | 61 | 2001;
