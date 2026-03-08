@@ -23,16 +23,20 @@ import {
 import DJED_ABI from "@/utils/abi/Djed.json";
 import COIN_ABI from "@/utils/abi/Coin.json";
 import ORACLE_ABI from "@/utils/abi/IOracle.json";
-import { useChainId , } from "wagmi";
+import { useChainId, useChains, useFeeData } from "wagmi";
 import {
   getContractAddresses,
   isDeployedAddress,
   type ChainId,
 } from "@/utils/addresses";
 import { useEffect, useCallback, useMemo } from "react";
+import UnsupportedNetwork from "@/components/UnsupportedNetwork";
 
 export default function Dashboard() {
   const chainId = useChainId();
+  const chains = useChains();
+  const chain = chains.find((c) => c.id === chainId);
+  const { data: feeData } = useFeeData();
   const contracts = useMemo(() => {
     try {
       return getContractAddresses(chainId as ChainId);
@@ -154,8 +158,10 @@ export default function Dashboard() {
       },
     });
 
-  const { data: reserveCoinTotalSupply, refetch: refetchReserveCoinTotalSupply } =
-  useReadContract({
+  const {
+    data: reserveCoinTotalSupply,
+    refetch: refetchReserveCoinTotalSupply,
+  } = useReadContract({
     address: reserveCoin as `0x${string}` | undefined,
     chainId,
     abi: COIN_ABI,
@@ -207,7 +213,6 @@ export default function Dashboard() {
     handleRefresh();
   }, [chainId, handleRefresh]);
 
-
   const formatNumber = (value: bigint | undefined, decimals: number = 18) => {
     if (!value) return "0";
     return parseFloat(formatUnits(value, decimals)).toFixed(4);
@@ -257,7 +262,7 @@ export default function Dashboard() {
       return { label: "At Risk", color: "text-red-500" };
     }
   };
-  const protocolStatus = getProtocolStatus(ratio);
+  const protocolStatus = getProtocolStatus(ratio as bigint | undefined);
 
   return (
     <>
