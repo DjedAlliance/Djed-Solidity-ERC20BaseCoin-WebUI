@@ -27,8 +27,6 @@ import { useChainId , } from "wagmi";
 import {
   getContractAddresses,
   isDeployedAddress,
-  ORACLE_ADDRESS,
-  RESERVE_COIN_ADDRESS,
   type ChainId,
 } from "@/utils/addresses";
 import { useEffect, useCallback, useMemo } from "react";
@@ -156,8 +154,10 @@ export default function Dashboard() {
       },
     });
 
-  const { data: reserveCoinTotalSupply, refetch: refetchReserveCoinTotalSupply } = useReadContract({
-    address: RESERVE_COIN_ADDRESS,
+  const { data: reserveCoinTotalSupply, refetch: refetchReserveCoinTotalSupply } =
+  useReadContract({
+    address: reserveCoin as `0x${string}` | undefined,
+    chainId,
     abi: COIN_ABI,
     functionName: "totalSupply",
     query: {
