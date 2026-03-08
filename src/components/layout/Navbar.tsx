@@ -57,6 +57,8 @@ const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
             <button
               className="md:hidden text-xl"
               onClick={() => setMobileMenu(!mobileMenu)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileMenu}
             >
               ☰
             </button>
