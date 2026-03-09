@@ -7,89 +7,76 @@ const TabNavigation = () => {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const pathname = usePathname();
 
-  const tabBase =
-    'py-1 px-1 bg-black dark:bg-white group hover:bg-gradient-to-b hover:from-white hover:to-black hover:via-white hover:to-[70%] transition-[background,border-radius] duration-500 ease-in-out [will-change:background,border-radius] dark:hover:bg-gradient-to-b dark:hover:from-[#0f172a] dark:hover:to-white dark:hover:via-[#0f172a]';
-
-  const linkBase =
-    'rounded-xl px-3 py-1 block text-center tab-link ' +
-    'transition-all duration-200 ease-out ' +
-    'group-hover:outline group-hover:outline-4 group-hover:outline-white dark:group-hover:!outline-slate-900 ' + // Force dark mode outline
-    'group-hover:transition-[background,color,border-radius] group-hover:duration-500 group-hover:delay-200 ease-in-out ' +
-    'group-hover:bg-gradient-to-r group-hover:from-orange-600 group-hover:to-orange-500 group-hover:text-white group-hover:rounded-2xl';
-
-  const spacerBase =
-    'bg-black dark:bg-white transition-[border-radius] ease-in-out duration-300';
-
   const isActive = (path: string) => pathname === path;
 
+  const tabs = [
+    { name: 'Explore', path: '/explore' },
+    { name: 'Create', path: '/create' },
+    { name: 'Dashboard', path: '/dashboard' },
+  ];
+
   return (
-    <div className="w-1/3 mx-auto text-white dark:text-black">
-      <div className="grid grid-cols-[0.4fr_0.8fr_0.8fr_0.8fr_0.4fr] gap-0 w-full">
-        {/* Left Spacer */}
-        <div
-          className={`${spacerBase} rounded-l-3xl ${
-            hoveredTab === 'explore'
-              ? 'rounded-tr-2xl duration-500'
-              : 'rounded-tr-none duration-200'
-          }`}
-        ></div>
-
-        {/* Explore */}
-        <div
-          className={`${tabBase} ${
-            hoveredTab === 'create' ? 'rounded-tr-2xl duration-500' : 'rounded-tr-none duration-200'
-          }`}
-          onMouseEnter={() => setHoveredTab('explore')}
+    <div className="flex items-center gap-1">
+      {tabs.map((tab) => (
+        <Link
+          key={tab.path}
+          href={tab.path}
+          className="relative px-5 py-2.5 rounded-xl font-semibold text-sm overflow-hidden group"
+          onMouseEnter={() => setHoveredTab(tab.path)}
           onMouseLeave={() => setHoveredTab(null)}
         >
-          <Link href="/explore" className={`${linkBase} group-hover:rounded-b-2xl ${isActive('/explore') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
-            Explore
-          </Link>
-        </div>
+          {/* Glassy background for active tab */}
+          {isActive(tab.path) && (
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-500 rounded-xl shadow-lg shadow-orange-500/40">
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-xl" />
+            </div>
+          )}
 
-        {/* Create */}
-        <div
-          className={`${tabBase} ${
-            hoveredTab === 'explore'
-              ? 'rounded-tl-2xl duration-500'
-              : hoveredTab === 'dashboard'
-              ? 'rounded-tr-2xl duration-500'
-              : 'rounded-tl-none rounded-tr-none duration-200'
-          }`}
-          onMouseEnter={() => setHoveredTab('create')}
-          onMouseLeave={() => setHoveredTab(null)}
-        >
-          <Link href="/create" className={`${linkBase} group-hover:rounded-b-2xl ${isActive('/create') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
-            Create
-          </Link>
-        </div>
+          {/* Glassy hover effect with shimmer */}
+          {hoveredTab === tab.path && !isActive(tab.path) && (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-600/30 to-orange-500/30 backdrop-blur-md rounded-xl transition-all duration-300" />
+              <div 
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-xl"
+                style={{
+                  animation: 'shimmer 2s infinite',
+                  transform: 'translateX(-100%)',
+                }}
+              />
+            </>
+          )}
 
-        {/* Dashboard */}
-        <div
-          className={`${tabBase} ${
-            hoveredTab === 'create'
-              ? 'rounded-tl-2xl duration-500'
-              : 'rounded-tl-none duration-200'
-          }`}
-          onMouseEnter={() => setHoveredTab('dashboard')}
-          onMouseLeave={() => setHoveredTab(null)}
-        >
-          <Link href="/dashboard" className={`${linkBase} ${isActive('/dashboard') ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl' : ''}`}>
-            Dashboard
-          </Link>
-        </div>
+          {/* Text with gradient on active */}
+          <span 
+            className={`
+              relative z-10 transition-all duration-300
+              ${
+                isActive(tab.path)
+                  ? 'text-white font-bold drop-shadow-lg'
+                  : hoveredTab === tab.path
+                  ? 'text-orange-500 dark:text-orange-400 font-bold'
+                  : 'text-gray-600 dark:text-gray-400'
+              }
+            `}
+            style={{
+              textShadow: isActive(tab.path) ? '0 2px 10px rgba(251, 146, 60, 0.5)' : 'none',
+            }}
+          >
+            {tab.name}
+          </span>
 
-
-
-        {/* Right Spacer */}
-        <div
-          className={`${spacerBase} rounded-r-3xl ${
-            hoveredTab === 'dashboard'
-              ? 'rounded-tl-2xl duration-500'
-              : 'rounded-tl-none duration-200'
-          }`}
-        ></div>
-      </div>
+          {/* Glow effect on hover */}
+          {hoveredTab === tab.path && (
+            <div 
+              className="absolute inset-0 rounded-xl opacity-50 blur-xl"
+              style={{
+                background: 'radial-gradient(circle, rgba(251, 146, 60, 0.4), transparent 70%)',
+                animation: 'pulse 2s ease-in-out infinite',
+              }}
+            />
+          )}
+        </Link>
+      ))}
     </div>
   );
 };
