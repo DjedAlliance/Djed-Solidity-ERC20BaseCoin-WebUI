@@ -23,8 +23,8 @@ const TabNavigation = () => {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <div className="w-1/3 mx-auto text-white dark:text-black">
-      <div className="grid grid-cols-[0.4fr_0.8fr_0.8fr_0.8fr_0.4fr] gap-0 w-full">
+    <div className="w-max max-w-full flex items-center text-white dark:text-black">
+      <div className="grid grid-cols-[0.4fr_0.8fr_0.8fr_0.8fr_0.4fr] gap-0 min-w-0">
         {/* Left Spacer */}
         <div
           className={`${spacerBase} rounded-l-3xl ${

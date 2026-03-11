@@ -29,9 +29,9 @@ const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
   return (
     <header className={cn("fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50", className)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-16 gap-6">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center">
             <Link href="/" className="flex items-center">
               <div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
                 Djed Protocol
@@ -39,12 +39,13 @@ const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
             </Link>
           </div>
 
-          {/* Navigation */}
-          <TabNavigation 
-          />
+          {/* Navigation - centered in remaining space */}
+          <nav className="flex-1 flex justify-center items-center min-w-0 px-2">
+            <TabNavigation />
+          </nav>
 
-          {/* Right side actions */}
-          <div className="flex items-center space-x-4">
+          {/* Right side actions - consistent spacing, no overlap */}
+          <div className="flex-shrink-0 flex items-center gap-4">
             <ThemeToggle />
             <WalletButton />
           </div>
