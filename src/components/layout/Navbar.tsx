@@ -8,7 +8,7 @@ import TabNavigation from "@/components/ui/tab-navigation";
 import WalletButton from "@/components/ui/walletButton";
 
 interface NavbarProps {
-  className?: string;
+  // Reserved for future use
 }
 
 const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
@@ -17,9 +17,34 @@ const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
 
   useEffect(() => {
     setMounted(true);
+    
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (!mounted) return null;
+  const isDark = theme === "dark" || resolvedTheme === "dark";
+  
+  <header
+    className="fixed top-0 left-0 right-0 z-50"
+    style={{
+      backgroundColor: isDark
+        ? "rgba(15,23,42,0.15)"
+        : "rgba(255,255,255,0.15)",
+      backdropFilter: "blur(60px) saturate(250%) brightness(1.1)",
+      WebkitBackdropFilter: "blur(60px) saturate(250%) brightness(1.1)",
+      borderBottom: "none",
+      boxShadow: scrolled
+        ? "0 8px 32px rgba(251,146,60,0.3)"
+        : "none",
+      transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
+    }}
+  >
 
   return (
     <header
