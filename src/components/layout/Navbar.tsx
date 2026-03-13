@@ -1,21 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useEffect, useRef } from "react";
-import { useTheme } from "next-themes";
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import TabNavigation from '@/components/ui/tab-navigation';
-import WalletButton from '@/components/ui/walletButton';
+import React, { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import TabNavigation from "@/components/ui/tab-navigation";
+import WalletButton from "@/components/ui/walletButton";
 
 interface NavbarProps {
   // Reserved for future use
 }
 
-const Navbar: React.FC<NavbarProps> = () => {
-  const { theme, resolvedTheme } = useTheme();
+const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
   const [mounted, setMounted] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const headerRef = useRef<HTMLElement>(null);
+  const [mobileMenu, setMobileMenu] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -48,156 +46,68 @@ const Navbar: React.FC<NavbarProps> = () => {
     }}
   >
 
-  if (!mounted) {
-    return (
-      <header 
-        className="fixed top-0 left-0 right-0 z-50 h-16"
-        style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
-      />
-    );
-  }
-
-  const isDark = theme === 'dark' || resolvedTheme === 'dark';
-
   return (
-    <header 
-      ref={headerRef}
-      className="fixed top-0 left-0 right-0"
-      style={{
-        zIndex: 9999,
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-      }}
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700",
+        className,
+      )}
     >
-      {/* Subtle color backdrop to enhance glass visibility */}
-      <div 
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          background: isDark 
-            ? 'linear-gradient(135deg, rgba(251, 146, 60, 0.08), rgba(249, 115, 22, 0.05), transparent)'
-            : 'linear-gradient(135deg, rgba(251, 146, 60, 0.12), rgba(249, 115, 22, 0.08), transparent)',
-          zIndex: 1,
-        }}
-      />
-      
-      <div 
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          opacity: 0.4,
-          background: isDark 
-            ? 'linear-gradient(to bottom, rgba(30, 41, 59, 0.3), transparent)'
-            : 'linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent)',
-        }}
-      />
-      
-      <div 
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background: 'linear-gradient(90deg, transparent, #FB923C, #F97316, #EA580C, #F97316, #FB923C, transparent)',
-          opacity: 0.9,
-          boxShadow: '0 0 15px rgba(251, 146, 60, 0.5)',
-        }}
-      />
-      
-      <div 
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-        style={{ position: 'relative', zIndex: 10 }}
-      >
-        <div className="flex justify-between items-center h-16">
-          
-          <div className="flex-shrink-0 relative group">
-            <Link href="/" className="flex items-center">
-              <div style={{ position: 'relative' }}>
-                <div 
-                  className="text-2xl font-bold"
-                  style={{
-                    background: 'linear-gradient(135deg, #F97316, #FB923C, #F97316)',
-                    backgroundSize: '200% auto',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    transition: 'transform 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
-                >
-                  Djed Protocol
-                </div>
-                
-                <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{
-                    background: 'radial-gradient(circle, rgba(251, 146, 60, 0.4), transparent 70%)',
-                    filter: 'blur(20px)',
-                    transform: 'scale(1.5)',
-                    zIndex: -1,
-                  }}
-                />
-              </div>
-            </Link>
-          </div>
+     >
+       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center h-16">
+          {/* Logo */}
+          <Link href="/" className="flex-shrink-0">
+            <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+              Djed Protocol
+            </span>
+          </Link>
 
-          <div className="hidden md:block">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex justify-center">
             <TabNavigation />
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="relative group">
-              <div 
-                className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.08)'
-                    : 'rgba(0, 0, 0, 0.05)',
-                  backdropFilter: 'blur(10px)',
-                  transform: 'scale(1.1)',
-                  zIndex: -1,
-                }}
-              />
+          {/* Right Controls */}
+          <div className="flex items-center gap-3 justify-end">
+            {/* Hide theme toggle on very small screens */}
+            <div className="hidden sm:block">
               <ThemeToggle />
             </div>
-            
-            <div className="relative group">
-              <div 
-                className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.15), rgba(249, 115, 22, 0.15))',
-                  backdropFilter: 'blur(10px)',
-                  transform: 'scale(1.05)',
-                  filter: 'blur(8px)',
-                  zIndex: -1,
-                }}
-              />
-              <WalletButton />
-            </div>
+
+            <WalletButton />
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden text-xl"
+              onClick={() => setMobileMenu(!mobileMenu)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileMenu}
+            >
+              ☰
+            </button>
           </div>
         </div>
       </div>
-      
-      <div 
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent)',
-          opacity: scrolled ? 0.3 : 0,
-          transition: 'opacity 0.7s ease',
-        }}
-      />
+      {/* Mobile Menu */}
+      {mobileMenu && (
+        <div className="md:hidden border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="flex flex-col items-center gap-4 py-4">
+            <Link href="/explore" onClick={() => setMobileMenu(false)}>
+              Explore
+            </Link>
+
+            <Link href="/create" onClick={() => setMobileMenu(false)}>
+              Create
+            </Link>
+
+            <Link href="/dashboard" onClick={() => setMobileMenu(false)}>
+              Dashboard
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

@@ -1,9 +1,12 @@
-import { useChainId } from 'wagmi';
-import { getContractAddresses } from '@/utils/addresses';
+import { useChainId } from "wagmi";
+import { getContractAddresses, type ChainId } from "@/utils/addresses";
 
 export function useDjedContracts() {
   const chainId = useChainId();
-  return getContractAddresses(chainId);
+
+  try {
+    return getContractAddresses(chainId as ChainId);
+  } catch {
+    return null;
+  }
 }
-const contracts = useDjedContracts();
-if (!contracts) return <UnsupportedNetwork />;

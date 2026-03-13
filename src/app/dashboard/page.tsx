@@ -1,6 +1,4 @@
 "use client";
-import { useEffect } from "react";
-import { useState } from "react";
 import { useReadContract } from "wagmi";
 import { formatUnits } from "viem";
 import {
@@ -25,18 +23,23 @@ import {
 import DJED_ABI from "@/utils/abi/Djed.json";
 import COIN_ABI from "@/utils/abi/Coin.json";
 import ORACLE_ABI from "@/utils/abi/IOracle.json";
-import { useChainId, useFeeData, useNetwork } from "wagmi";
-import { getContractAddresses, isDeployedAddress } from "@/utils/addresses";
+import { useChainId, useChains, useFeeData } from "wagmi";
+import {
+  getContractAddresses,
+  isDeployedAddress,
+  type ChainId,
+} from "@/utils/addresses";
+import { useEffect, useCallback, useMemo } from "react";
 import UnsupportedNetwork from "@/components/UnsupportedNetwork";
-import { useMemo } from "react";
 
 export default function Dashboard() {
   const chainId = useChainId();
-  const { chain } = useNetwork();
+  const chains = useChains();
+  const chain = chains.find((c) => c.id === chainId);
   const { data: feeData } = useFeeData();
   const contracts = useMemo(() => {
     try {
-      return getContractAddresses(chainId);
+      return getContractAddresses(chainId as ChainId);
     } catch {
       return null;
     }
@@ -51,16 +54,20 @@ export default function Dashboard() {
   const { data: ratio, refetch: refetchRatio } = useReadContract({
     address: djed as `0x${string}` | undefined,
     chainId,
-    enabled: isDeployedAddress(djed),
     abi: DJED_ABI,
     functionName: "ratio",
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
   });
 
   const { data: reserveAmount, refetch: refetchReserveAmount } =
     useReadContract({
       address: djed as `0x${string}` | undefined,
       chainId,
-      enabled: isDeployedAddress(djed),
+      query: {
+        enabled: isDeployedAddress(djed),
+      },
       abi: DJED_ABI,
       functionName: "R",
       args: [0n],
@@ -69,7 +76,9 @@ export default function Dashboard() {
   const { refetch: refetchLiabilities } = useReadContract({
     address: djed as `0x${string}` | undefined,
     chainId,
-    enabled: isDeployedAddress(djed),
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: "L",
   });
@@ -77,7 +86,9 @@ export default function Dashboard() {
   const { data: scPrice, refetch: refetchScPrice } = useReadContract({
     address: djed as `0x${string}` | undefined,
     chainId,
-    enabled: isDeployedAddress(djed),
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: "scPrice",
     args: [0n],
@@ -87,7 +98,9 @@ export default function Dashboard() {
     useReadContract({
       address: djed as `0x${string}` | undefined,
       chainId,
-      enabled: isDeployedAddress(djed),
+      query: {
+        enabled: isDeployedAddress(djed),
+      },
       abi: DJED_ABI,
       functionName: "rcTargetPrice",
       args: [0n],
@@ -98,13 +111,17 @@ export default function Dashboard() {
     chainId,
     abi: ORACLE_ABI,
     functionName: "readData",
-    enabled: isDeployedAddress(oracle),
+    query: {
+      enabled: isDeployedAddress(oracle),
+    },
   });
 
   const { data: fee, refetch: refetchFee } = useReadContract({
     address: djed as `0x${string}` | undefined,
     chainId,
-    enabled: isDeployedAddress(djed),
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: "fee",
   });
@@ -112,7 +129,9 @@ export default function Dashboard() {
   const { data: treasuryFee, refetch: refetchTreasuryFee } = useReadContract({
     address: djed as `0x${string}` | undefined,
     chainId,
-    enabled: isDeployedAddress(djed),
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: "treasuryFee",
   });
@@ -120,7 +139,9 @@ export default function Dashboard() {
   const { data: txLimit, refetch: refetchTxLimit } = useReadContract({
     address: djed as `0x${string}` | undefined,
     chainId,
-    enabled: isDeployedAddress(djed),
+    query: {
+      enabled: isDeployedAddress(djed),
+    },
     abi: DJED_ABI,
     functionName: "txLimit",
   });
@@ -132,7 +153,9 @@ export default function Dashboard() {
       chainId,
       abi: COIN_ABI,
       functionName: "totalSupply",
-      enabled: isDeployedAddress(stableCoin),
+      query: {
+        enabled: isDeployedAddress(stableCoin),
+      },
     });
 
   const {
@@ -143,20 +166,23 @@ export default function Dashboard() {
     chainId,
     abi: COIN_ABI,
     functionName: "totalSupply",
-    enabled: isDeployedAddress(reserveCoin),
+    query: {
+      enabled: isDeployedAddress(reserveCoin),
+    },
   });
 
   const { data: baseCoinAddress, refetch: refetchBaseCoinAddress } =
     useReadContract({
       address: djed as `0x${string}` | undefined,
       chainId,
-      enabled: isDeployedAddress(djed),
+      query: {
+        enabled: isDeployedAddress(djed),
+      },
       abi: DJED_ABI,
       functionName: "baseCoin",
     });
 
-  const handleRefresh = () => {
-    // Refetch all contract data
+  const handleRefresh = useCallback(() => {
     refetchRatio();
     refetchReserveAmount();
     refetchLiabilities();
@@ -169,10 +195,23 @@ export default function Dashboard() {
     refetchStablecoinTotalSupply();
     refetchReserveCoinTotalSupply();
     refetchBaseCoinAddress();
-  };
+  }, [
+    refetchRatio,
+    refetchReserveAmount,
+    refetchLiabilities,
+    refetchScPrice,
+    refetchRcTargetPrice,
+    refetchOraclePrice,
+    refetchFee,
+    refetchTreasuryFee,
+    refetchTxLimit,
+    refetchStablecoinTotalSupply,
+    refetchReserveCoinTotalSupply,
+    refetchBaseCoinAddress,
+  ]);
   useEffect(() => {
     handleRefresh();
-  }, [chainId]);
+  }, [chainId, handleRefresh]);
 
   const formatNumber = (value: bigint | undefined, decimals: number = 18) => {
     if (!value) return "0";
@@ -223,7 +262,7 @@ export default function Dashboard() {
       return { label: "At Risk", color: "text-red-500" };
     }
   };
-  const protocolStatus = getProtocolStatus(ratio);
+  const protocolStatus = getProtocolStatus(ratio as bigint | undefined);
 
   return (
     <>
