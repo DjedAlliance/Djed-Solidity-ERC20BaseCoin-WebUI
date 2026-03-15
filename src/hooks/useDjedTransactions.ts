@@ -22,12 +22,12 @@ export function useDjedTransactions() {
   };
 
   // Step 2: Buy StableCoin
-  const buyStableCoin = async (amount: bigint) => {
+  const buyStableCoin = async (amount: bigint, receiver: `0x${string}`, feeUI: bigint = 0n, ui: `0x${string}` = "0x0000000000000000000000000000000000000000") => {
     return writeContract({
       address: DJED_CONTRACT as `0x${string}`,
       abi: djedAbi,
-      functionName: "buyStableCoin",
-      args: [amount],
+      functionName: "buyStableCoins",
+      args: [receiver, feeUI, ui, amount],
     });
   };
 
