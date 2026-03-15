@@ -4,8 +4,8 @@ import { useWriteContract } from "wagmi";
 import { erc20Abi } from "viem";
 import djedAbi from "@/utils/abi/Djed.json";
 
-const DJED_CONTRACT = "0xYourDjedContractAddress";
-const BASE_TOKEN = "0xYourBaseTokenAddress";
+const DJED_CONTRACT = process.env.NEXT_PUBLIC_DJED_CONTRACT as `0x${string}`;
+const BASE_TOKEN = process.env.NEXT_PUBLIC_BASE_TOKEN as `0x${string}`;
 
 export function useDjedTransactions() {
 
