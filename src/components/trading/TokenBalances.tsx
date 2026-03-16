@@ -40,13 +40,8 @@ export default function TokenBalances() {
     <div className="p-4 border rounded-lg">
       <h2 className="text-xl font-bold mb-2">Token Balances</h2>
 
-      <p>
-        BaseCoin Balance: {baseBalance ? formatUnits(baseBalance, 18) : "0"}
-      </p>
-      <p>
-        StableCoin Balance:{" "}
-        {stableBalance ? formatUnits(stableBalance, 18) : "0"}
-      </p>
+      <p>BaseCoin Balance: {baseBalance ? formatUnits(baseBalance, 18) : "0"}</p>
+      <p>StableCoin Balance: {stableBalance ? formatUnits(stableBalance, 18) : "0"}</p>
     </div>
   );
 }

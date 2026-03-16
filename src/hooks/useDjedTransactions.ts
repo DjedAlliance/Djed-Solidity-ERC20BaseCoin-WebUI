@@ -2,7 +2,9 @@
 
 import { useWriteContract } from "wagmi";
 import djedAbi from "@/utils/abi/Djed.json";
-import { DJED_ADDRESS } from "@/utils/addresses";
+
+const DJED_CONTRACT = process.env.NEXT_PUBLIC_DJED_CONTRACT as `0x${string}`;
+const BASE_TOKEN = process.env.NEXT_PUBLIC_BASE_TOKEN as `0x${string}`;
 
 export function useDjedTransactions() {
 
