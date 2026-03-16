@@ -2,14 +2,13 @@
 
 import { useAccount, useReadContract } from "wagmi";
 import { erc20Abi, formatUnits } from "viem";
-const BASE_TOKEN = "0xYourBaseTokenAddress" as `0x${string}`;
-const STABLE_TOKEN = "0xYourStableCoinAddress" as `0x${string}`;
+import { BASE_COIN_ADDRESS, STABLE_COIN_ADDRESS } from "@/utils/addresses";
 
 export default function TokenBalances() {
   const { address, isConnected } = useAccount();
 
   const { data: baseBalance } = useReadContract({
-    address: BASE_TOKEN,
+    address: BASE_COIN_ADDRESS,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: [address as `0x${string}`],
@@ -19,7 +18,7 @@ export default function TokenBalances() {
   });
 
   const { data: stableBalance } = useReadContract({
-    address: STABLE_TOKEN,
+    address: STABLE_COIN_ADDRESS,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: [address as `0x${string}`],

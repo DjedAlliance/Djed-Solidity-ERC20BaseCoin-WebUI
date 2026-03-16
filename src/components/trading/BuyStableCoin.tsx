@@ -48,7 +48,12 @@ export default function BuyStableCoin() {
 
       // Step 2
       setStatus("Executing buy transaction...");
-      await buyStableCoin(parsedAmount, address);
+      const buyTx = await buyStableCoin(parsedAmount, address);
+
+      // wait for buy transaction confirmation
+      await publicClient?.waitForTransactionReceipt({
+        hash: buyTx,
+      });
 
       // Step 3
       setStatus("Step 3: Transaction confirmed!");

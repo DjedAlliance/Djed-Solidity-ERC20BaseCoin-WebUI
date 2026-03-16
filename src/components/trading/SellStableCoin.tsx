@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useDjedTransactions } from "@/hooks/useDjedTransactions";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
+import { DJED_ADDRESS, STABLE_COIN_ADDRESS } from "@/utils/addresses";
 import { parseUnits } from "viem";
 export default function SellStableCoin() {
   const [amount, setAmount] = useState("");
@@ -15,7 +16,8 @@ export default function SellStableCoin() {
   const fee = amount ? Number(amount) * feeRate : 0;
   const receiveAmount = amount ? Number(amount) - fee : 0;
 
-  const { sellStableCoin } = useDjedTransactions();
+  const { approveBaseToken, sellStableCoin } = useDjedTransactions();
+  const publicClient = usePublicClient();
 
   const handleSell = async () => {
     if (!amount) {
@@ -28,12 +30,30 @@ export default function SellStableCoin() {
     }
     try {
       setLoading(true);
-      setStatus("Executing sell transaction...");
 
       const parsedAmount = parseUnits(amount, 18);
 
-      await sellStableCoin(parsedAmount, address);
+      // Step 1: Approve StableCoin
+      setStatus("Approving StableCoin...");
+      const approveTx = await approveBaseToken(
+        STABLE_COIN_ADDRESS,
+        DJED_ADDRESS,
+        parsedAmount,
+      );
 
+      await publicClient?.waitForTransactionReceipt({
+        hash: approveTx,
+      });
+
+      // Step 2: Execute sell
+      setStatus("Executing sell transaction...");
+      const sellTx = await sellStableCoin(parsedAmount, address);
+
+      await publicClient?.waitForTransactionReceipt({
+        hash: sellTx,
+      });
+
+      // Step 3: Success
       setStatus("Transaction confirmed!");
 
       setAmount("");
