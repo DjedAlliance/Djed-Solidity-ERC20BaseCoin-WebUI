@@ -1,44 +1,72 @@
 "use client";
 
 import { useWriteContract } from "wagmi";
-import { erc20Abi } from "viem";
 import djedAbi from "@/utils/abi/Djed.json";
-
-const DJED_CONTRACT = "0xYourDjedContractAddress";
-const BASE_TOKEN = "0xYourBaseTokenAddress";
+import { DJED_ADDRESS } from "@/utils/addresses";
 
 export function useDjedTransactions() {
 
-  const { writeContract } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
 
-  // Step 1: Approve ERC20 token
-  const approveBaseToken = async (amount: bigint) => {
-    return writeContract({
-      address: BASE_TOKEN as `0x${string}`,
-      abi: erc20Abi,
+  const DJED_CONTRACT = DJED_ADDRESS as `0x${string}`;
+
+  // Approve BaseCoin (used before buying stablecoins)
+  const approveBaseToken = async (
+    tokenAddress: `0x${string}`,
+    spender: `0x${string}`,
+    amount: bigint
+  ) => {
+    return writeContractAsync({
+      address: tokenAddress,
+      abi: [
+        {
+          type: "function",
+          name: "approve",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "spender", type: "address" },
+            { name: "amount", type: "uint256" }
+          ],
+          outputs: [{ name: "", type: "bool" }]
+        }
+      ],
       functionName: "approve",
-      args: [DJED_CONTRACT, amount],
+      args: [spender, amount],
     });
   };
 
-  // Step 2: Buy StableCoin
-  const buyStableCoin = async (amount: bigint) => {
-    return writeContract({
-      address: DJED_CONTRACT as `0x${string}`,
+  // Buy StableCoins
+  const buyStableCoin = async (
+    amount: bigint,
+    receiver: `0x${string}`,
+    feeUI: bigint = 0n,
+    ui: `0x${string}` = "0x0000000000000000000000000000000000000000"
+  ) => {
+
+    return writeContractAsync({
+      address: DJED_CONTRACT,
       abi: djedAbi,
-      functionName: "buyStableCoin",
-      args: [amount],
+      functionName: "buyStableCoins",
+      args: [receiver, feeUI, ui, amount],
     });
+
   };
 
-  // Step 3: Sell StableCoin
-  const sellStableCoin = async (amount: bigint) => {
-    return writeContract({
-      address: DJED_CONTRACT as `0x${string}`,
+  // Sell StableCoins
+  const sellStableCoin = async (
+    amount: bigint,
+    receiver: `0x${string}`,
+    feeUI: bigint = 0n,
+    ui: `0x${string}` = "0x0000000000000000000000000000000000000000"
+  ) => {
+
+    return writeContractAsync({
+      address: DJED_CONTRACT,
       abi: djedAbi,
-      functionName: "sellStableCoin",
-      args: [amount],
+      functionName: "sellStableCoins",
+      args: [amount, receiver, feeUI, ui],
     });
+
   };
 
   return {

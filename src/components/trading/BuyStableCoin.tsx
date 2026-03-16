@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { BASE_COIN_ADDRESS, DJED_ADDRESS } from "@/utils/addresses";
 import { useDjedTransactions } from "@/hooks/useDjedTransactions";
-
+import { useAccount, usePublicClient } from "wagmi";
+import { parseUnits } from "viem";
 export default function BuyStableCoin() {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
-
+  const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
   const feeRate = 0.003;
 
   const fee = amount ? Number(amount) * feeRate : 0;
@@ -15,42 +18,49 @@ export default function BuyStableCoin() {
 
   const { approveBaseToken, buyStableCoin } = useDjedTransactions();
 
-const handleBuy = async () => {
+  const handleBuy = async () => {
+    if (!amount) {
+      alert("Enter an amount");
+      return;
+    }
 
-  if (!amount) {
-    alert("Enter an amount");
-    return;
-  }
+    try {
+      if (!isConnected || !address) {
+        alert("Connect your wallet first");
+        return;
+      }
+      setLoading(true);
 
-  try {
+      const parsedAmount = parseUnits(amount, 18);
 
-    setLoading(true);
+      // Step 1
+      setStatus("Approving BaseCoin...");
+      const approveTx = await approveBaseToken(
+        BASE_COIN_ADDRESS,
+        DJED_ADDRESS,
+        parsedAmount,
+      );
 
-    const parsedAmount = BigInt(amount);
+      // wait for approval confirmation
+      await publicClient?.waitForTransactionReceipt({
+        hash: approveTx,
+      });
 
-    // Step 1
-    setStatus(" Approving BaseCoin...");
-    await approveBaseToken(parsedAmount);
+      // Step 2
+      setStatus("Executing buy transaction...");
+      await buyStableCoin(parsedAmount, address);
 
-    // Step 2
-    setStatus(" Executing buy transaction...");
-    await buyStableCoin(parsedAmount);
+      // Step 3
+      setStatus("Step 3: Transaction confirmed!");
 
-    // Step 3
-    setStatus(" Transaction confirmed!");
-
-    setAmount("");
-
-  } catch (error) {
-
-    console.error("Transaction failed:", error);
-    setStatus("Transaction failed");
-
-  } finally {
-
-    setLoading(false);
-  }
-};
+      setAmount("");
+    } catch (error) {
+      console.error("Transaction failed:", error);
+      setStatus("Transaction failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 border rounded-xl bg-surface">

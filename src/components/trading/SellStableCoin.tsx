@@ -2,30 +2,37 @@
 
 import { useState } from "react";
 import { useDjedTransactions } from "@/hooks/useDjedTransactions";
-
+import { useAccount } from "wagmi";
+import { parseUnits } from "viem";
 export default function SellStableCoin() {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const { sellStableCoin } = useDjedTransactions();
-  const feeRate = 0.003;
 
+  const { address, isConnected } = useAccount();
+
+  const feeRate = 0.003;
   const fee = amount ? Number(amount) * feeRate : 0;
   const receiveAmount = amount ? Number(amount) - fee : 0;
+
+  const { sellStableCoin } = useDjedTransactions();
 
   const handleSell = async () => {
     if (!amount) {
       alert("Enter an amount");
       return;
     }
-
+    if (!isConnected || !address) {
+      alert("Connect your wallet first");
+      return;
+    }
     try {
       setLoading(true);
       setStatus("Executing sell transaction...");
 
-      const parsedAmount = BigInt(amount);
+      const parsedAmount = parseUnits(amount, 18);
 
-      await sellStableCoin(parsedAmount);
+      await sellStableCoin(parsedAmount, address);
 
       setStatus("Transaction confirmed!");
 
@@ -51,12 +58,14 @@ export default function SellStableCoin() {
         className="w-full border rounded-lg p-2 mb-4"
       />
 
+      {/* Fee Estimate */}
       {amount && (
         <div className="text-sm text-secondary mb-4 space-y-1">
           <p>Protocol Fee: {fee.toFixed(4)}</p>
           <p>You Receive: {receiveAmount.toFixed(4)} BaseCoin</p>
         </div>
       )}
+
       {/* Sell Button */}
       <button
         onClick={handleSell}
