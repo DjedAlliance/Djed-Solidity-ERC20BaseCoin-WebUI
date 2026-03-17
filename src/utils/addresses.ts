@@ -1,4 +1,4 @@
-import { isAddress } from 'viem';
+import { isAddress } from "viem";
 
 // A commonly used constant for the zero address
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -15,18 +15,25 @@ export interface ContractAddresses {
 }
 
 // Validation function to ensure addresses are valid
-const validateAddress = (address: string, name: string, chainId: ChainId, allowZero: boolean = false): `0x${string}` => {
+const validateAddress = (
+  address: string,
+  name: string,
+  chainId: ChainId,
+  allowZero: boolean = false,
+): `0x${string}` => {
   if (!address) {
     throw new Error(`Invalid ${name} address for chain ${chainId}: ${address}`);
   }
-  
+
   // Allow zero addresses for undeployed chains in development
   if (address === ZERO_ADDRESS && !allowZero) {
     throw new Error(`Invalid ${name} address for chain ${chainId}: ${address}`);
   }
-  
+
   if (!isAddress(address)) {
-    throw new Error(`Invalid ${name} address format for chain ${chainId}: ${address}`);
+    throw new Error(
+      `Invalid ${name} address format for chain ${chainId}: ${address}`,
+    );
   }
   return address as `0x${string}`;
 };
@@ -47,7 +54,12 @@ export const CONTRACT_ADDRESSES: Record<ChainId, ContractAddresses> = {
     stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 137, true),
     reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 137, true),
     oracle: validateAddress(ZERO_ADDRESS, "Oracle", 137, true),
-    collateralAsset: validateAddress(ZERO_ADDRESS, "CollateralAsset", 137, true),
+    collateralAsset: validateAddress(
+      ZERO_ADDRESS,
+      "CollateralAsset",
+      137,
+      true,
+    ),
   },
   // BSC (placeholder addresses - not yet deployed)
   56: {
@@ -63,15 +75,25 @@ export const CONTRACT_ADDRESSES: Record<ChainId, ContractAddresses> = {
     stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 8453, true),
     reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 8453, true),
     oracle: validateAddress(ZERO_ADDRESS, "Oracle", 8453, true),
-    collateralAsset: validateAddress(ZERO_ADDRESS, "CollateralAsset", 8453, true),
+    collateralAsset: validateAddress(
+      ZERO_ADDRESS,
+      "CollateralAsset",
+      8453,
+      true,
+    ),
   },
   // Sepolia Testnet (not yet deployed)
   11155111: {
-    djed: validateAddress(ZERO_ADDRESS, "DJED", 11155111,true),
-    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 11155111,true),
-    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 11155111,true),
-    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 11155111,true),
-    collateralAsset: validateAddress(ZERO_ADDRESS, "CollateralAsset", 11155111,true),
+    djed: validateAddress(ZERO_ADDRESS, "DJED", 11155111, true),
+    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 11155111, true),
+    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 11155111, true),
+    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 11155111, true),
+    collateralAsset: validateAddress(
+      ZERO_ADDRESS,
+      "CollateralAsset",
+      11155111,
+      true,
+    ),
   },
   // Ethereum Classic (placeholder addresses - not yet deployed)
   61: {
@@ -87,7 +109,12 @@ export const CONTRACT_ADDRESSES: Record<ChainId, ContractAddresses> = {
     stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 2001, true),
     reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 2001, true),
     oracle: validateAddress(ZERO_ADDRESS, "Oracle", 2001, true),
-    collateralAsset: validateAddress(ZERO_ADDRESS, "CollateralAsset", 2001, true),
+    collateralAsset: validateAddress(
+      ZERO_ADDRESS,
+      "CollateralAsset",
+      2001,
+      true,
+    ),
   },
 };
 
@@ -100,14 +127,20 @@ export const getContractAddresses = (chainId: ChainId): ContractAddresses => {
   return addresses;
 };
 
-export const getDjedAddress = (chainId: ChainId): `0x${string}` => getContractAddresses(chainId).djed;
-export const getStableCoinAddress = (chainId: ChainId): `0x${string}` => getContractAddresses(chainId).stableCoin;
-export const getReserveCoinAddress = (chainId: ChainId): `0x${string}` => getContractAddresses(chainId).reserveCoin;
-export const getOracleAddress = (chainId: ChainId): `0x${string}` => getContractAddresses(chainId).oracle;
-export const getCollateralAssetAddress = (chainId: ChainId): `0x${string}` => getContractAddresses(chainId).collateralAsset;
+export const getDjedAddress = (chainId: ChainId): `0x${string}` =>
+  getContractAddresses(chainId).djed;
+export const getStableCoinAddress = (chainId: ChainId): `0x${string}` =>
+  getContractAddresses(chainId).stableCoin;
+export const getReserveCoinAddress = (chainId: ChainId): `0x${string}` =>
+  getContractAddresses(chainId).reserveCoin;
+export const getOracleAddress = (chainId: ChainId): `0x${string}` =>
+  getContractAddresses(chainId).oracle;
+export const getCollateralAssetAddress = (chainId: ChainId): `0x${string}` =>
+  getContractAddresses(chainId).collateralAsset;
 
 // Legacy exports for backward compatibility (defaulting to Sepolia testnet)
-export const DJED_ADDRESS = getDjedAddress(11155111);
+export const DJED_ADDRESS = process.env
+  .NEXT_PUBLIC_DJED_CONTRACT as `0x${string}`;
 export const STABLE_COIN_ADDRESS = getStableCoinAddress(11155111);
 export const RESERVE_COIN_ADDRESS = getReserveCoinAddress(11155111);
 export const ORACLE_ADDRESS = getOracleAddress(11155111);
