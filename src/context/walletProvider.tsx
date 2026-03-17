@@ -1,5 +1,9 @@
 'use client';
 
+import { useChainId, useAccount } from 'wagmi';
+import UnsupportedNetwork from '@/components/UnsupportedNetwork';
+import { DJED_SUPPORTED_CHAINS } from '@/utils/supportedChains';
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
 import '@rainbow-me/rainbowkit/styles.css';
@@ -30,7 +34,8 @@ const queryClient = new QueryClient({
     },
 });
 
-export function WalletProvider({ children }: { children: React.ReactNode }) {
+export function WalletProvider({ children }: { children: React.ReactNode }) 
+{
     const { resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
@@ -97,12 +102,24 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
     // Always render the providers to ensure hooks work, but show loading state
     return (
-        <WagmiProvider config={stableConfig}>
-            <QueryClientProvider client={queryClient}>
-                <RainbowKitProvider theme={theme}>
+    <WagmiProvider config={stableConfig}>
+        <QueryClientProvider client={queryClient}>
+            <RainbowKitProvider theme={theme}>
+                <SupportedChainGuard>
                     {children}
-                </RainbowKitProvider>
-            </QueryClientProvider>
-        </WagmiProvider>
-    );
+                </SupportedChainGuard>
+            </RainbowKitProvider>
+        </QueryClientProvider>
+    </WagmiProvider>
+);
+}
+function SupportedChainGuard({ children }: { children: React.ReactNode }) {
+    const chainId = useChainId();
+    const { isConnected } = useAccount();
+
+    if (isConnected && !DJED_SUPPORTED_CHAINS.includes(chainId)) {
+        return <UnsupportedNetwork />;
+    }
+
+    return <>{children}</>;
 }

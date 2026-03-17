@@ -1,7 +1,11 @@
 import { isAddress } from "viem";
-
 // A commonly used constant for the zero address
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const isDeployedAddress = (address?: string | null): address is `0x${string}` => {
+  if (!address) return false;
+  if (!isAddress(address)) return false;
+  return address !== ZERO_ADDRESS;
+};
 
 // Chain-aware contract addresses
 export type ChainId = 1 | 137 | 56 | 8453 | 11155111 | 61 | 2001;
@@ -118,13 +122,23 @@ export const CONTRACT_ADDRESSES: Record<ChainId, ContractAddresses> = {
   },
 };
 
+export const ALLOWED_DJED_CONTRACTS = new Set<`0x${string}`>(
+  Object.values(CONTRACT_ADDRESSES)
+    .map((c) => c?.djed)
+    .filter(
+      (addr): addr is `0x${string}` =>
+        !!addr && addr !== ZERO_ADDRESS
+    )
+);
+
 // Helper functions to get addresses by chain ID
-export const getContractAddresses = (chainId: ChainId): ContractAddresses => {
-  const addresses = CONTRACT_ADDRESSES[chainId];
-  if (!addresses) {
-    throw new Error(`Unsupported chain ID: ${chainId}`);
-  }
-  return addresses;
+export const getContractAddresses = (
+  chainId?: number,
+): ContractAddresses | null => {
+  if (!chainId) return null;
+
+  const addresses = CONTRACT_ADDRESSES[chainId as ChainId];
+  return addresses ?? null;
 };
 
 export const getDjedAddress = (chainId: ChainId): `0x${string}` =>
@@ -146,8 +160,10 @@ export const RESERVE_COIN_ADDRESS = getReserveCoinAddress(11155111);
 export const ORACLE_ADDRESS = getOracleAddress(11155111);
 export const COLLATERAL_ASSET_ADDRESS = getCollateralAssetAddress(11155111);
 
-// Legacy export for backward compatibility
-export const BASE_COIN_ADDRESS = COLLATERAL_ASSET_ADDRESS;
+export const getCollateralAssetAddress = (
+  chainId: ChainId,
+): `0x${string}` | null =>
+  getContractAddresses(chainId)?.collateralAsset ?? null;
 
 export const StableCoinFactories = {
   1: ZERO_ADDRESS, // Ethereum Mainnet - Update with actual address
