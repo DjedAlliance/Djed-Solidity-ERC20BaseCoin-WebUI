@@ -1,100 +1,163 @@
 "use client";
 
 import { useState } from "react";
-import { useDjedTransactions } from "@/hooks/useDjedTransactions";
-import { useAccount, usePublicClient } from "wagmi";
-import { DJED_ADDRESS, STABLE_COIN_ADDRESS } from "@/utils/addresses";
+import { useAccount, useWriteContract } from "wagmi";
 import { parseUnits } from "viem";
+
+import {
+  getStableCoinAddress,
+  isSupportedChain,
+  ChainId,
+} from "@/utils/addresses";
+
 export default function SellStableCoin() {
+  const { chain } = useAccount();
+  const { writeContractAsync } = useWriteContract();
+
+  const chainId = chain?.id;
+  const isValidChain = !!chainId && isSupportedChain(chainId);
+
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const { address, isConnected } = useAccount();
+  // -----------------------------
+  // Config
+  // -----------------------------
+  const FEE_PERCENT = 3;
 
-  const feeRate = 0.003;
-  const fee = amount ? Number(amount) * feeRate : 0;
-  const receiveAmount = amount ? Number(amount) - fee : 0;
+  // -----------------------------
+  // Validate Amount
+  // -----------------------------
+  const getValidAmount = () => {
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return null;
+    }
+    return numericAmount;
+  };
 
-  const { approveBaseToken, sellStableCoin } = useDjedTransactions();
-  const publicClient = usePublicClient();
+  const numericAmount = getValidAmount();
 
+  // -----------------------------
+  // Fee Calculation
+  // -----------------------------
+  const fee = numericAmount ? (numericAmount * FEE_PERCENT) / 100 : 0;
+  const netReturn = numericAmount ? numericAmount - fee : 0;
+
+  // -----------------------------
+  // Handle Sell
+  // -----------------------------
   const handleSell = async () => {
-    if (!amount) {
-      alert("Enter an amount");
+    setError(null);
+
+    if (!isValidChain) {
+      setError("Unsupported or no network selected");
       return;
     }
-    if (!isConnected || !address) {
-      alert("Connect your wallet first");
+
+    if (!numericAmount) {
+      setError("Enter a valid amount greater than 0");
       return;
     }
+
+    const chainIdTyped = chainId as ChainId;
+
+    let stableCoinAddress: `0x${string}`;
+
+    try {
+      stableCoinAddress = getStableCoinAddress(chainIdTyped);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Contracts not deployed on this network";
+
+      setError(message);
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const parsedAmount = parseUnits(amount, 18);
+      const amountWei = parseUnits(amount, 18);
 
-      // Step 1: Approve StableCoin
-      setStatus("Approving StableCoin...");
-      const approveTx = await approveBaseToken(
-        STABLE_COIN_ADDRESS,
-        DJED_ADDRESS,
-        parsedAmount,
-      );
-
-      await publicClient?.waitForTransactionReceipt({
-        hash: approveTx,
+      await writeContractAsync({
+        address: stableCoinAddress,
+        abi: [
+          {
+            name: "sell",
+            type: "function",
+            stateMutability: "nonpayable",
+            inputs: [{ name: "amount", type: "uint256" }],
+            outputs: [],
+          },
+        ],
+        functionName: "sell",
+        args: [amountWei],
       });
-
-      // Step 2: Execute sell
-      setStatus("Executing sell transaction...");
-      const sellTx = await sellStableCoin(parsedAmount, address);
-
-      await publicClient?.waitForTransactionReceipt({
-        hash: sellTx,
-      });
-
-      // Step 3: Success
-      setStatus("Transaction confirmed!");
 
       setAmount("");
-    } catch (error) {
-      console.error("Sell transaction failed:", error);
-      setStatus("Transaction failed");
+    } catch (err: unknown) {
+      console.error(err);
+
+      const message =
+        err instanceof Error ? err.message : "Transaction failed";
+
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="p-6 border rounded-xl bg-surface">
-      <h2 className="text-xl font-bold mb-4">Sell StableCoin</h2>
+  // -----------------------------
+  // UI State
+  // -----------------------------
+  const isDisabled =
+    loading || !isValidChain || !numericAmount;
 
-      {/* Amount Input */}
+  return (
+    <div className="p-4 border rounded-xl space-y-4">
+      <h2 className="text-lg font-semibold">Sell StableCoin</h2>
+
       <input
         type="number"
-        placeholder="Enter StableCoin amount"
+        placeholder="Enter amount"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="w-full border rounded-lg p-2 mb-4"
+        className="w-full p-2 border rounded"
       />
 
-      {/* Fee Estimate */}
-      {amount && (
-        <div className="text-sm text-secondary mb-4 space-y-1">
-          <p>Protocol Fee: {fee.toFixed(4)}</p>
-          <p>You Receive: {receiveAmount.toFixed(4)} BaseCoin</p>
+      {numericAmount && (
+        <div className="text-sm text-gray-600 space-y-1">
+          <div>Fee ({FEE_PERCENT}%): {fee}</div>
+          <div>You receive (Collateral): {netReturn}</div>
         </div>
       )}
 
-      {/* Sell Button */}
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+
       <button
         onClick={handleSell}
-        disabled={loading}
-        className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
+        disabled={isDisabled}
+        className={`w-full p-2 rounded text-white ${
+          isDisabled ? "bg-gray-400" : "bg-red-600 hover:bg-red-700"
+        }`}
       >
-        {loading ? "Processing..." : "Sell StableCoin"}
+        {loading ? "Processing..." : "Sell"}
       </button>
-      {status && <p className="text-sm mt-3 text-secondary">{status}</p>}
+
+      {!chain && (
+        <div className="text-yellow-500 text-sm">
+          Connect your wallet
+        </div>
+      )}
+
+      {chain && !isSupportedChain(chain.id) && (
+        <div className="text-yellow-500 text-sm">
+          Unsupported network
+        </div>
+      )}
     </div>
   );
 }
