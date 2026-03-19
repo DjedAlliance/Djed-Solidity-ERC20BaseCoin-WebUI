@@ -8,8 +8,8 @@ const nextConfig = {
   },
 
   webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
       "@react-native-async-storage/async-storage": false,
     };
     return config;
