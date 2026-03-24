@@ -113,6 +113,14 @@ function TradePage() {
 
   /* ================= READS ================= */
 
+  const { data: baseCoinAddress } = useReadContract({
+    address: contractAddress,
+    abi: DJED_ABI,
+    functionName: "baseCoin",
+    chainId,
+    enabled: isDeployedAddress(contractAddress),
+  });
+
   const { data: baseCoinBalance } = useReadContract({
     address: baseCoinAddress as `0x${string}`,
     abi: COIN_ABI,
@@ -129,14 +137,6 @@ function TradePage() {
     args: address ? [address] : undefined,
     chainId,
     enabled: isDeployedAddress(stableCoin) && Boolean(address),
-  });
-
-  const { data: baseCoinAddress } = useReadContract({
-    address: contractAddress,
-    abi: DJED_ABI,
-    functionName: "baseCoin",
-    chainId,
-    enabled: isDeployedAddress(contractAddress),
   });
 
   const { data: baseCoinAllowance } = useReadContract({

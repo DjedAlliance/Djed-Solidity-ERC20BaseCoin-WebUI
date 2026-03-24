@@ -3,7 +3,15 @@ import { ThemeProvider } from "@/components/themeProvider";
 import { WalletProvider } from "@/context/walletProvider";
 import { Toaster } from "sonner";
 
-export function ClientProviders({ children }: { children: React.ReactNode }) {
+import { State } from "wagmi";
+
+export function ClientProviders({ 
+  children,
+  initialState
+}: { 
+  children: React.ReactNode;
+  initialState?: State;
+}) {
   return (
     <ThemeProvider
       attribute="class"
@@ -12,7 +20,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
       storageKey="fate-protocol-theme"
     >
-      <WalletProvider>
+      <WalletProvider initialState={initialState}>
         {children}
         <Toaster position="top-right" richColors />
       </WalletProvider>

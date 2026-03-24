@@ -12,7 +12,7 @@ import {
     lightTheme,
     darkTheme,
 } from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, State } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { config } from '@/utils/wagmiConfig';
 
@@ -34,8 +34,13 @@ const queryClient = new QueryClient({
     },
 });
 
-export function WalletProvider({ children }: { children: React.ReactNode }) 
-{
+export function WalletProvider({ 
+    children,
+    initialState
+}: { 
+    children: React.ReactNode;
+    initialState?: State;
+}) {
     const { resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
@@ -102,7 +107,7 @@ export function WalletProvider({ children }: { children: React.ReactNode })
 
     // Always render the providers to ensure hooks work, but show loading state
     return (
-    <WagmiProvider config={stableConfig}>
+    <WagmiProvider config={stableConfig} initialState={initialState}>
         <QueryClientProvider client={queryClient}>
             <RainbowKitProvider theme={theme}>
                 <SupportedChainGuard>

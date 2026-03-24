@@ -34,7 +34,15 @@ const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
   const isDark = theme === "dark" || resolvedTheme === "dark";
   
   // To avoid hydration mismatch involving theme before mounting
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <header className={cn("fixed top-0 left-0 right-0 z-50 h-16", className)}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="h-16" />
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header
