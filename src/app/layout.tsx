@@ -6,6 +6,9 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/themeProvider";
 
+import { headers } from "next/headers";
+import { cookieToInitialState } from "wagmi";
+import { config } from "@/utils/wagmiConfig";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,11 +31,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieHeader = (await headers()).get('cookie');
+  const initialState = cookieHeader ? cookieToInitialState(config, cookieHeader) : undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -41,7 +47,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('theme') || 'system';
+                  var theme = localStorage.getItem('fate-protocol-theme') || 'system';
                   var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                   var finalTheme = theme === 'system' ? systemTheme : theme;
                   
@@ -57,8 +63,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider>
-          <ClientProviders>
+        <ClientProviders initialState={initialState}>
           <Navbar />
           
           <main className="pt-16">
@@ -66,8 +71,7 @@ export default function RootLayout({
           </main>
           
           <Footer />
-          </ClientProviders>
-        </ThemeProvider>
+        </ClientProviders>
       </body>
     </html>
   );
