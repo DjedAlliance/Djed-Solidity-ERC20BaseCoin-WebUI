@@ -1,13 +1,9 @@
 import { isAddress } from "viem";
 // A commonly used constant for the zero address
-export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-export const isDeployedAddress = (address?: string | null): address is `0x${string}` => {
-  if (!address) return false;
-  if (!isAddress(address)) return false;
-  return address !== ZERO_ADDRESS;
-};
+export const ZERO_ADDRESS =
+  "0x0000000000000000000000000000000000000000";
 
-// Chain-aware contract addresses
+// Chain IDs supported
 export type ChainId = 1 | 137 | 56 | 8453 | 11155111 | 61 | 2001;
 
 export interface ContractAddresses {
@@ -18,154 +14,193 @@ export interface ContractAddresses {
   collateralAsset: `0x${string}`;
 }
 
-// Validation function to ensure addresses are valid
+// --------------------------------------
+// Address Validation Helpers
+// --------------------------------------
+
 const validateAddress = (
   address: string,
   name: string,
-  chainId: ChainId,
-  allowZero: boolean = false,
+  chainId: ChainId
 ): `0x${string}` => {
-  if (!address) {
-    throw new Error(`Invalid ${name} address for chain ${chainId}: ${address}`);
-  }
-
-  // Allow zero addresses for undeployed chains in development
-  if (address === ZERO_ADDRESS && !allowZero) {
-    throw new Error(`Invalid ${name} address for chain ${chainId}: ${address}`);
-  }
-
-  if (!isAddress(address)) {
+  if (!address || !isAddress(address)) {
     throw new Error(
-      `Invalid ${name} address format for chain ${chainId}: ${address}`,
+      `Invalid ${name} address for chain ${chainId}: ${address}`
     );
   }
   return address as `0x${string}`;
 };
 
-// Chain-specific contract addresses
+const ensureDeployed = (
+  address: `0x${string}`,
+  name: string,
+  chainId: ChainId
+): `0x${string}` => {
+  if (address === ZERO_ADDRESS) {
+    throw new Error(`${name} not deployed on chain ${chainId}`);
+  }
+  return address;
+};
+
+// --------------------------------------
+// Contract Address Config (EDIT HERE)
+// --------------------------------------
+
 export const CONTRACT_ADDRESSES: Record<ChainId, ContractAddresses> = {
-  // Ethereum Mainnet (placeholder addresses - not yet deployed)
   1: {
-    djed: validateAddress(ZERO_ADDRESS, "DJED", 1, true),
-    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 1, true),
-    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 1, true),
-    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 1, true),
-    collateralAsset: validateAddress(ZERO_ADDRESS, "CollateralAsset", 1, true),
+    djed: ZERO_ADDRESS,
+    stableCoin: ZERO_ADDRESS,
+    reserveCoin: ZERO_ADDRESS,
+    oracle: ZERO_ADDRESS,
+    collateralAsset: ZERO_ADDRESS,
   },
-  // Polygon (placeholder addresses - not yet deployed)
   137: {
-    djed: validateAddress(ZERO_ADDRESS, "DJED", 137, true),
-    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 137, true),
-    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 137, true),
-    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 137, true),
-    collateralAsset: validateAddress(
-      ZERO_ADDRESS,
-      "CollateralAsset",
-      137,
-      true,
-    ),
+    djed: ZERO_ADDRESS,
+    stableCoin: ZERO_ADDRESS,
+    reserveCoin: ZERO_ADDRESS,
+    oracle: ZERO_ADDRESS,
+    collateralAsset: ZERO_ADDRESS,
   },
-  // BSC (placeholder addresses - not yet deployed)
   56: {
-    djed: validateAddress(ZERO_ADDRESS, "DJED", 56, true),
-    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 56, true),
-    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 56, true),
-    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 56, true),
-    collateralAsset: validateAddress(ZERO_ADDRESS, "CollateralAsset", 56, true),
+    djed: ZERO_ADDRESS,
+    stableCoin: ZERO_ADDRESS,
+    reserveCoin: ZERO_ADDRESS,
+    oracle: ZERO_ADDRESS,
+    collateralAsset: ZERO_ADDRESS,
   },
-  // Base (placeholder addresses - not yet deployed)
   8453: {
-    djed: validateAddress(ZERO_ADDRESS, "DJED", 8453, true),
-    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 8453, true),
-    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 8453, true),
-    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 8453, true),
-    collateralAsset: validateAddress(
-      ZERO_ADDRESS,
-      "CollateralAsset",
-      8453,
-      true,
-    ),
+    djed: ZERO_ADDRESS,
+    stableCoin: ZERO_ADDRESS,
+    reserveCoin: ZERO_ADDRESS,
+    oracle: ZERO_ADDRESS,
+    collateralAsset: ZERO_ADDRESS,
   },
-  // Sepolia Testnet (not yet deployed)
   11155111: {
-    djed: validateAddress(ZERO_ADDRESS, "DJED", 11155111, true),
-    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 11155111, true),
-    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 11155111, true),
-    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 11155111, true),
-    collateralAsset: validateAddress(
-      ZERO_ADDRESS,
-      "CollateralAsset",
-      11155111,
-      true,
-    ),
+    djed: ZERO_ADDRESS, // 👉 replace when deployed
+    stableCoin: ZERO_ADDRESS,
+    reserveCoin: ZERO_ADDRESS,
+    oracle: ZERO_ADDRESS,
+    collateralAsset: ZERO_ADDRESS,
   },
-  // Ethereum Classic (placeholder addresses - not yet deployed)
   61: {
-    djed: validateAddress(ZERO_ADDRESS, "DJED", 61, true),
-    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 61, true),
-    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 61, true),
-    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 61, true),
-    collateralAsset: validateAddress(ZERO_ADDRESS, "CollateralAsset", 61, true),
+    djed: ZERO_ADDRESS,
+    stableCoin: ZERO_ADDRESS,
+    reserveCoin: ZERO_ADDRESS,
+    oracle: ZERO_ADDRESS,
+    collateralAsset: ZERO_ADDRESS,
   },
-  // Milkomeda (placeholder addresses - not yet deployed)
   2001: {
-    djed: validateAddress(ZERO_ADDRESS, "DJED", 2001, true),
-    stableCoin: validateAddress(ZERO_ADDRESS, "StableCoin", 2001, true),
-    reserveCoin: validateAddress(ZERO_ADDRESS, "ReserveCoin", 2001, true),
-    oracle: validateAddress(ZERO_ADDRESS, "Oracle", 2001, true),
-    collateralAsset: validateAddress(
-      ZERO_ADDRESS,
-      "CollateralAsset",
-      2001,
-      true,
-    ),
+    djed: ZERO_ADDRESS,
+    stableCoin: ZERO_ADDRESS,
+    reserveCoin: ZERO_ADDRESS,
+    oracle: ZERO_ADDRESS,
+    collateralAsset: ZERO_ADDRESS,
   },
 };
 
-export const ALLOWED_DJED_CONTRACTS = new Set<`0x${string}`>(
-  Object.values(CONTRACT_ADDRESSES)
-    .map((c) => c?.djed)
-    .filter(
-      (addr): addr is `0x${string}` =>
-        !!addr && addr !== ZERO_ADDRESS
-    )
-);
+// --------------------------------------
+// Core Getter
+// --------------------------------------
 
-// Helper functions to get addresses by chain ID
 export const getContractAddresses = (
-  chainId?: number,
-): ContractAddresses | null => {
-  if (!chainId) return null;
+  chainId: ChainId
+): ContractAddresses => {
+  const addresses = CONTRACT_ADDRESSES[chainId];
 
-  const addresses = CONTRACT_ADDRESSES[chainId as ChainId];
-  return addresses ?? null;
+  if (!addresses) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
+
+  return addresses;
 };
 
-export const getDjedAddress = (chainId: ChainId): `0x${string}` | null =>
-  getContractAddresses(chainId)?.djed ?? null;
+// --------------------------------------
+// Safe Getters (NO ZERO ADDRESS LEAK)
+// --------------------------------------
 
-export const getStableCoinAddress = (chainId: ChainId): `0x${string}` | null =>
-  getContractAddresses(chainId)?.stableCoin ?? null;
+export const getDjedAddress = (chainId: ChainId) =>
+  ensureDeployed(
+    validateAddress(
+      getContractAddresses(chainId).djed,
+      "DJED",
+      chainId
+    ),
+    "DJED",
+    chainId
+  );
 
-export const getReserveCoinAddress = (chainId: ChainId): `0x${string}` | null =>
-  getContractAddresses(chainId)?.reserveCoin ?? null;
+export const getStableCoinAddress = (chainId: ChainId) =>
+  ensureDeployed(
+    validateAddress(
+      getContractAddresses(chainId).stableCoin,
+      "StableCoin",
+      chainId
+    ),
+    "StableCoin",
+    chainId
+  );
 
-export const getOracleAddress = (chainId: ChainId): `0x${string}` | null =>
-  getContractAddresses(chainId)?.oracle ?? null;
+export const getReserveCoinAddress = (chainId: ChainId) =>
+  ensureDeployed(
+    validateAddress(
+      getContractAddresses(chainId).reserveCoin,
+      "ReserveCoin",
+      chainId
+    ),
+    "ReserveCoin",
+    chainId
+  );
 
-export const getCollateralAssetAddress = (
-  chainId: ChainId,
-): `0x${string}` | null =>
-  getContractAddresses(chainId)?.collateralAsset ?? null;
+export const getOracleAddress = (chainId: ChainId) =>
+  ensureDeployed(
+    validateAddress(
+      getContractAddresses(chainId).oracle,
+      "Oracle",
+      chainId
+    ),
+    "Oracle",
+    chainId
+  );
 
-export const StableCoinFactories = {
-  1: ZERO_ADDRESS, // Ethereum Mainnet - Update with actual address
-  137: ZERO_ADDRESS, // Polygon - Update with actual address
-  56: ZERO_ADDRESS, // BSC - Update with actual address
-  8453: ZERO_ADDRESS, // Base - Update with actual address
-  11155111: ZERO_ADDRESS, // Sepolia Testnet - Updated with deployed address
-  61: ZERO_ADDRESS, // Ethereum Classic - Update with actual address
-  2001: ZERO_ADDRESS, // Milkomeda - Update with actual address
-} as {
-  [key: number]: `0x${string}`;
+export const getCollateralAssetAddress = (chainId: ChainId) =>
+  ensureDeployed(
+    validateAddress(
+      getContractAddresses(chainId).collateralAsset,
+      "CollateralAsset",
+      chainId
+    ),
+    "CollateralAsset",
+    chainId
+  );
+
+// --------------------------------------
+// Environment-based DJED (SAFE)
+// --------------------------------------
+
+const DJED_ENV = process.env.NEXT_PUBLIC_DJED_CONTRACT ?? "";
+
+export const DJED_ADDRESS: `0x${string}` | undefined =
+  DJED_ENV && isAddress(DJED_ENV)
+    ? (DJED_ENV as `0x${string}`)
+    : undefined;
+
+// --------------------------------------
+// Factory Addresses (Optional)
+// --------------------------------------
+
+export const StableCoinFactories: Record<number, `0x${string}`> = {
+  1: ZERO_ADDRESS,
+  137: ZERO_ADDRESS,
+  56: ZERO_ADDRESS,
+  8453: ZERO_ADDRESS,
+  11155111: ZERO_ADDRESS,
+  61: ZERO_ADDRESS,
+  2001: ZERO_ADDRESS,
+};
+// --------------------------------------
+// Chain Support Helper
+// --------------------------------------
+
+export const isSupportedChain = (id: number): id is ChainId => {
+  return [1, 137, 56, 8453, 11155111, 61, 2001].includes(id);
 };

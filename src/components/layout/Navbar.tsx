@@ -53,8 +53,6 @@ const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
         className,
       )}
     >
-     >
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-[auto_1fr_auto] items-center h-16">
           {/* Logo */}

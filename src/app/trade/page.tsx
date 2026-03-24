@@ -1,8 +1,8 @@
 /* eslint-disable */
 // @ts-nocheck
 "use client";
-import { useSwitchChain } from "wagmi";
-import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   useAccount,
@@ -14,14 +14,45 @@ import {
 import { parseUnits, formatUnits } from "viem";
 
 import {
-  getContractAddresses,
-  ALLOWED_DJED_CONTRACTS,
-  isDeployedAddress,
-} from "@/utils/addresses";
+  ArrowUpRight,
+  ArrowDownRight,
+  Calculator,
+  Info,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+} from "lucide-react";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Button,
+  Input,
+  Label,
+  Separator,
+  Alert,
+  AlertDescription,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui";
 
 import DJED_ABI from "@/utils/abi/Djed.json";
 import COIN_ABI from "@/utils/abi/Coin.json";
-import UnsupportedNetwork from "@/components/UnsupportedNetwork";
+import {
+  getStableCoinAddress,
+  getReserveCoinAddress,
+  DJED_ADDRESS,
+} from "@/utils/addresses";
 
 type TradeType =
   | "buy-stable"
@@ -34,66 +65,17 @@ function TradePage() {
   const chainId = useChainId();
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
 
-  /* ================= CONTRACTS ================= */
-
-  const contracts = getContractAddresses(chainId);
-
-  if (!contracts) {
-  return (
-    <div className="flex flex-col items-center gap-4 p-8">
-      <p>Unsupported Network</p>
-      <button
-        onClick={async () => {
-          try {
-            await switchChainAsync({ chainId: 1 }); // replace with your default chain
-          } catch (err) {
-            console.error("Switch failed:", err);
-          }
-        }}
-        className="px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        Switch Network
-      </button>
-    </div>
-  );
-}
-
-  const { djed, stableCoin, reserveCoin } = contracts;
-
-  const rawAddress = searchParams.get("address") as `0x${string}` | null;
-
-  const contractAddress =
-    rawAddress && ALLOWED_DJED_CONTRACTS.has(rawAddress) ? rawAddress : djed;
-
-  /* ================= STATE ================= */
+  const contractAddress = (searchParams.get("address") ??
+    DJED_ADDRESS) as `0x${string}` | undefined;
 
   const [tradeType, setTradeType] = useState<TradeType>("buy-stable");
   const [amount, setAmount] = useState("");
   const [amountRC, setAmountRC] = useState("");
   const [receiver, setReceiver] = useState("");
+  const [estimatedAmount, setEstimatedAmount] = useState("0");
+  const [isCalculating, setIsCalculating] = useState(false);
   const [approvalHash, setApprovalHash] = useState<`0x${string}` | undefined>();
-
-  /* ================= SAFE PARSE ================= */
-
-  const parsedAmount = useMemo(() => {
-    try {
-      return amount ? parseUnits(amount, 18) : 0n;
-    } catch {
-      return 0n;
-    }
-  }, [amount]);
-
-  const parsedAmountRC = useMemo(() => {
-    try {
-      return amountRC ? parseUnits(amountRC, 18) : 0n;
-    } catch {
-      return 0n;
-    }
-  }, [amountRC]);
-
-  /* ================= WRITE ================= */
 
   const {
     writeContractAsync,
@@ -102,20 +84,29 @@ function TradePage() {
     error,
   } = useWriteContract();
 
-  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({ hash });
 
-  const { isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({
-    hash: approvalHash,
-  });
+  const { isLoading: isApprovalConfirming } =
+    useWaitForTransactionReceipt({ hash: approvalHash });
 
-  /* ================= READS ================= */
+  let stableCoinAddress: `0x${string}` | undefined;
+  let reserveCoinAddress: `0x${string}` | undefined;
+
+  try {
+    if (chainId) {
+      stableCoinAddress = getStableCoinAddress(chainId);
+      reserveCoinAddress = getReserveCoinAddress(chainId);
+    }
+  } catch (e) {
+    console.warn("Address error:", e);
+  }
 
   const { data: baseCoinAddress } = useReadContract({
-    address: contractAddress,
+    address: contractAddress!,
     abi: DJED_ABI,
     functionName: "baseCoin",
-    chainId,
-    enabled: isDeployedAddress(contractAddress),
+    query: { enabled: !!contractAddress },
   });
 
   const { data: baseCoinAllowance } = useReadContract({
@@ -123,173 +114,104 @@ function TradePage() {
     abi: COIN_ABI,
     functionName: "allowance",
     args: address && contractAddress ? [address, contractAddress] : undefined,
-    chainId,
-    enabled: isDeployedAddress(baseCoinAddress) && Boolean(address),
+    query: { enabled: !!baseCoinAddress && !!address },
   });
 
-  const { data: stableCoinAllowance } = useReadContract({
-    address: stableCoin,
-    abi: COIN_ABI,
-    functionName: "allowance",
-    args: address && contractAddress ? [address, contractAddress] : undefined,
-    chainId,
-    enabled: isDeployedAddress(stableCoin) && Boolean(address),
+  const { data: scPrice } = useReadContract({
+    address: contractAddress!,
+    abi: DJED_ABI,
+    functionName: "scPrice",
+    args: [0n],
+    query: { enabled: !!contractAddress },
   });
 
-  const { data: reserveCoinAllowance } = useReadContract({
-    address: reserveCoin,
-    abi: COIN_ABI,
-    functionName: "allowance",
-    args: address && contractAddress ? [address, contractAddress] : undefined,
-    chainId,
-    enabled: isDeployedAddress(reserveCoin) && Boolean(address),
-  });
+  // ---------------- CALC ----------------
 
-  /* ================= EXECUTE TRADE ================= */
-
-  const executeTrade = useCallback(async () => {
-    if (!address || !receiver) return;
-
-    switch (tradeType) {
-      case "buy-stable":
-        await writeContractAsync({
-          address: contractAddress,
-          abi: DJED_ABI,
-          functionName: "buyStablecoins",
-          args: [receiver, 0n, address, parsedAmount],
-        });
-        break;
-
-      case "sell-stable":
-        await writeContractAsync({
-          address: contractAddress,
-          abi: DJED_ABI,
-          functionName: "sellStablecoins",
-          args: [parsedAmount, receiver, 0n, address],
-        });
-        break;
-
-      case "sell-both":
-        await writeContractAsync({
-          address: contractAddress,
-          abi: DJED_ABI,
-          functionName: "sellBothCoins",
-          args: [parsedAmount, parsedAmountRC, receiver, 0n, address],
-        });
-        break;
+  useEffect(() => {
+    if (amount && scPrice) {
+      try {
+        setIsCalculating(true);
+        const amt = parseUnits(amount, 18);
+        const result = (amt * 10n ** 18n) / (scPrice as bigint);
+        setEstimatedAmount(formatUnits(result, 18));
+      } catch {
+        setEstimatedAmount("0");
+      } finally {
+        setIsCalculating(false);
+      }
     }
-  }, [
-    tradeType,
-    parsedAmount,
-    parsedAmountRC,
-    receiver,
-    address,
-    writeContractAsync,
-    contractAddress,
-  ]);
+  }, [amount, scPrice]);
 
-  /* ================= HANDLE TRADE ================= */
+  useEffect(() => {
+    if (address && !receiver) {
+      setReceiver(address);
+    }
+  }, [address]);
 
-  const handleTrade = useCallback(async () => {
-    if (!address) return;
+  // ---------------- TRADE ----------------
 
-    // BaseCoin approval
-    if (
-      tradeType === "buy-stable" &&
-      baseCoinAddress &&
-      (baseCoinAllowance ?? 0n) < parsedAmount
-    ) {
+  const handleTrade = async () => {
+    if (!amount || !receiver || !address || !contractAddress) return;
+
+    const amountBN = parseUnits(amount, 18);
+
+    // approval
+    if (baseCoinAddress && (baseCoinAllowance ?? 0n) < amountBN) {
       const tx = await writeContractAsync({
         address: baseCoinAddress,
         abi: COIN_ABI,
         functionName: "approve",
-        args: [contractAddress, parsedAmount],
+        args: [contractAddress, amountBN],
       });
       setApprovalHash(tx);
       return;
     }
 
-    // Stable approval
-    if (
-      tradeType === "sell-stable" &&
-      (stableCoinAllowance ?? 0n) < parsedAmount
-    ) {
-      const tx = await writeContractAsync({
-        address: stableCoin,
-        abi: COIN_ABI,
-        functionName: "approve",
-        args: [contractAddress, parsedAmount],
-      });
-      setApprovalHash(tx);
-      return;
-    }
+    await writeContractAsync({
+      address: contractAddress,
+      abi: DJED_ABI,
+      functionName:
+        tradeType === "buy-stable"
+          ? "buyStablecoins"
+          : tradeType === "sell-stable"
+          ? "sellStablecoins"
+          : tradeType === "buy-reserve"
+          ? "buyReserveCoins"
+          : tradeType === "sell-reserve"
+          ? "sellReserveCoins"
+          : "sellBothCoins",
+      args:
+        tradeType === "sell-both"
+          ? [amountBN, parseUnits(amountRC || "0", 18), receiver, 0n, address]
+          : tradeType === "sell-stable"
+          ? [amountBN, receiver, 0n, address]
+          : [receiver, 0n, address, amountBN],
+    });
+  };
 
-    // Sell both approvals
-    if (tradeType === "sell-both") {
-      if ((stableCoinAllowance ?? 0n) < parsedAmount) {
-        const tx = await writeContractAsync({
-          address: stableCoin,
-          abi: COIN_ABI,
-          functionName: "approve",
-          args: [contractAddress, parsedAmount],
-        });
-        setApprovalHash(tx);
-        return;
-      }
-
-      if ((reserveCoinAllowance ?? 0n) < parsedAmountRC) {
-        const tx = await writeContractAsync({
-          address: reserveCoin,
-          abi: COIN_ABI,
-          functionName: "approve",
-          args: [contractAddress, parsedAmountRC],
-        });
-        setApprovalHash(tx);
-        return;
-      }
-    }
-
-    await executeTrade();
-  }, [
-    tradeType,
-    parsedAmount,
-    parsedAmountRC,
-    baseCoinAddress,
-    baseCoinAllowance,
-    stableCoinAllowance,
-    reserveCoinAllowance,
-    writeContractAsync,
-    contractAddress,
-    address,
-    executeTrade,
-  ]);
-
-  /* ================= SAFE APPROVAL RETRY ================= */
-
-  useEffect(() => {
-  // Reset state when wallet or network changes
-  setApprovalHash(undefined);
-  setAmount("");
-  setAmountRC("");
-  setReceiver(address ?? "");
-}, [chainId, address]);
-
-  /* ================= CONNECT CHECK ================= */
-
-  if (!isConnected) {
-    return <div>Connect Wallet</div>;
-  }
-
-  /* ================= UI ================= */
+  if (!chainId) return <div className="p-6">Connect wallet</div>;
+  if (!contractAddress) return <div className="p-6">Invalid contract</div>;
+  if (!isConnected) return <div className="p-6">Connect wallet</div>;
 
   return (
-    <div>
-      <button onClick={handleTrade} disabled={!parsedAmount || isPending}>
-        Execute Trade
-      </button>
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Trade</h1>
 
-      {error && <div>{error.message}</div>}
-      {isConfirmed && <div>Trade Confirmed</div>}
+      <Input
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder="Amount"
+      />
+
+      <Button
+        onClick={handleTrade}
+        disabled={isPending || isConfirming || isApprovalConfirming}
+      >
+        {isPending ? "Processing..." : "Execute Trade"}
+      </Button>
+
+      {error && <div className="text-red-500">{error.message}</div>}
+      {isConfirmed && <div className="text-green-500">Success</div>}
     </div>
   );
 }
