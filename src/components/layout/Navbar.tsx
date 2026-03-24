@@ -6,14 +6,17 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import TabNavigation from "@/components/ui/tab-navigation";
 import WalletButton from "@/components/ui/walletButton";
+import { useTheme } from "next-themes";
 
 interface NavbarProps {
-  // Reserved for future use
+  className?: string;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
   const [mounted, setMounted] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { theme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -30,31 +33,28 @@ const Navbar: React.FC<NavbarProps> = ({ className = "" }) => {
 
   const isDark = theme === "dark" || resolvedTheme === "dark";
   
-  <header
-    className="fixed top-0 left-0 right-0 z-50"
-    style={{
-      backgroundColor: isDark
-        ? "rgba(15,23,42,0.15)"
-        : "rgba(255,255,255,0.15)",
-      backdropFilter: "blur(60px) saturate(250%) brightness(1.1)",
-      WebkitBackdropFilter: "blur(60px) saturate(250%) brightness(1.1)",
-      borderBottom: "none",
-      boxShadow: scrolled
-        ? "0 8px 32px rgba(251,146,60,0.3)"
-        : "none",
-      transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
-    }}
-  >
+  // To avoid hydration mismatch involving theme before mounting
+  if (!mounted) return null;
 
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700",
-        className,
+        "fixed top-0 left-0 right-0 z-50",
+        className
       )}
+      style={{
+        backgroundColor: isDark
+          ? "rgba(15,23,42,0.15)"
+          : "rgba(255,255,255,0.15)",
+        backdropFilter: "blur(60px) saturate(250%) brightness(1.1)",
+        WebkitBackdropFilter: "blur(60px) saturate(250%) brightness(1.1)",
+        borderBottom: "none",
+        boxShadow: scrolled
+          ? "0 8px 32px rgba(251,146,60,0.3)"
+          : "none",
+        transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
+      }}
     >
-     >
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-[auto_1fr_auto] items-center h-16">
           {/* Logo */}

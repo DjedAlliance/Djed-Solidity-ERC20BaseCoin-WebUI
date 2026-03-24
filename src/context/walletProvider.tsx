@@ -116,6 +116,16 @@ export function WalletProvider({ children }: { children: React.ReactNode })
 function SupportedChainGuard({ children }: { children: React.ReactNode }) {
     const chainId = useChainId();
     const { isConnected } = useAccount();
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Prevent hydration swaps from interrupting RainbowKit/Wagmi boot process
+    if (!isMounted) {
+        return <>{children}</>;
+    }
 
     if (isConnected && !DJED_SUPPORTED_CHAINS.includes(chainId)) {
         return <UnsupportedNetwork />;
