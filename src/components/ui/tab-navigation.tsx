@@ -3,23 +3,17 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+const tabs = [
+  { name: 'Explore', path: '/explore' },
+  { name: 'Create', path: '/create' },
+  { name: 'Dashboard', path: '/dashboard' },
+];
+
 const TabNavigation = () => {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const pathname = usePathname();
 
   const isActive = (path: string) => pathname === path;
-
-  return (
-    <div className="w-full max-w-md mx-auto text-white dark:text-black">
-      <div className="grid grid-cols-[0.4fr_0.8fr_0.8fr_0.8fr_0.4fr] gap-0 w-full">
-        {/* Left Spacer */}
-        <div
-          className={`${spacerBase} rounded-l-3xl ${
-            hoveredTab === 'explore'
-              ? 'rounded-tr-2xl duration-500'
-              : 'rounded-tr-none duration-200'
-          }`}
-        ></div>
 
   return (
     <div className="flex items-center gap-1">
